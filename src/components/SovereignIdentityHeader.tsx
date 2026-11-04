@@ -2,6 +2,7 @@ import React from 'react';
 import { FarmerIdentity, FarmBalances } from '../types/farm';
 import { formatRupiah, formatEth, shortenAddress } from '../utils/formatters';
 import { sounds } from '../utils/soundEffects';
+import { Web3WalletButton } from './Web3WalletButton';
 import {
   Wallet,
   ShieldCheck,
@@ -21,6 +22,7 @@ import {
   Award,
   ChevronDown,
   Home,
+  User,
 } from 'lucide-react';
 import {
   SupportedLanguage,
@@ -52,6 +54,20 @@ interface SovereignIdentityHeaderProps {
   onOpenGlobalAudit: () => void;
   onOpenOwnerTreasuryModal?: () => void;
   onScrollToCoopSection?: () => void;
+  onOpenProfileModal?: () => void;
+  onScrollToMultiCoop?: () => void;
+  onOpenQrisModal?: () => void;
+  onOpenTwoWayConfirmation?: () => void;
+  twoWayPendingCount?: number;
+  connectedMetaMaskAddress?: string | null;
+  onConnectMetaMask?: () => void;
+  onDisconnectMetaMask?: () => void;
+  metaMaskBalanceEth?: string | null;
+  userProfile?: { fullName: string; role: 'owner' | 'peternak' };
+  activeFarmerAccount?: { id: string; fullName: string; avatarUrl?: string; role: 'owner' | 'peternak'; status: string; } | null;
+  onOpenPersonalDashboard?: () => void;
+  onOpenFarmerSwitcher?: () => void;
+  onOpenMonetaryDirective?: () => void;
   farmerCountryFlag?: string;
   farmerCountryName?: string;
   farmerFlockSize?: number;
@@ -79,6 +95,20 @@ export const SovereignIdentityHeader: React.FC<SovereignIdentityHeaderProps> = (
   onOpenGlobalAudit,
   onOpenOwnerTreasuryModal,
   onScrollToCoopSection,
+  onOpenProfileModal,
+  onScrollToMultiCoop,
+  onOpenQrisModal,
+  onOpenTwoWayConfirmation,
+  twoWayPendingCount,
+  connectedMetaMaskAddress,
+  onConnectMetaMask,
+  onDisconnectMetaMask,
+  metaMaskBalanceEth,
+  userProfile,
+  activeFarmerAccount,
+  onOpenPersonalDashboard,
+  onOpenFarmerSwitcher,
+  onOpenMonetaryDirective,
   farmerCountryFlag = '🇮🇩',
   farmerCountryName = 'Indonesia (Genesis Hub)',
   farmerFlockSize = 40,
@@ -201,6 +231,25 @@ export const SovereignIdentityHeader: React.FC<SovereignIdentityHeaderProps> = (
             <span className="hidden sm:inline">Gramasi</span>
           </button>
 
+          {/* Sovereign Core Mathematical & Monetary Directive Button */}
+          {onOpenMonetaryDirective && (
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playClick();
+                onOpenMonetaryDirective();
+              }}
+              className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-indigo-500/20 to-cyan-500/20 hover:from-indigo-500/30 hover:to-cyan-500/30 text-cyan-300 transition border border-cyan-500/40 flex items-center gap-1.5 text-xs font-semibold font-mono shadow-sm"
+              title="Buka Sovereign Mathematical & Monetary Directive (Hukum Besi Invarian & Infinite Absorption)"
+            >
+              <span>📐</span>
+              <span className="hidden sm:inline">Directive Moneter</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/30 text-emerald-300 font-bold border border-emerald-500/40">
+                V_sys &gt; V_harv
+              </span>
+            </button>
+          )}
+
           {/* Smart Contract Source Viewer Button */}
           <button
             type="button"
@@ -240,6 +289,120 @@ export const SovereignIdentityHeader: React.FC<SovereignIdentityHeaderProps> = (
             <Home className="w-3.5 h-3.5 text-cyan-400" />
             <span className="hidden sm:inline">Kandang IoT</span>
           </button>
+
+          {/* Multi-Kandang & Mesin Tetas Quick Button (10 - 6.000 Ekor) */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onScrollToMultiCoop) {
+                onScrollToMultiCoop();
+              } else {
+                const el = document.getElementById('multi-coop-manager-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }
+              sounds.playClick();
+            }}
+            className="py-1.5 px-3 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 transition border border-indigo-500/30 flex items-center gap-1.5 text-xs font-semibold font-mono"
+            title="Buka Manajemen Multi-Kandang & Mesin Tetas (Sovereign Scale)"
+          >
+            <span>🏗️ Multi-Kandang</span>
+          </button>
+
+          {/* Barcode DANA / QRIS Quick Modal Button */}
+          {onOpenQrisModal && (
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playClick();
+                onOpenQrisModal();
+              }}
+              className="py-1.5 px-3 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 transition border border-rose-500/40 flex items-center gap-1.5 text-xs font-semibold font-mono shadow-sm"
+              title="Buka Barcode QRIS / DANA P2P (Lumpia Ipul - NMID ID1026601649688)"
+            >
+              <span>📲</span>
+              <span>QRIS DANA P2P</span>
+            </button>
+          )}
+
+          {/* Konfirmasi 2-Arah (Pengirim 'Saya Sudah Membayar' & Penerima 'Owner Approve') */}
+          {onOpenTwoWayConfirmation && (
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playClick();
+                onOpenTwoWayConfirmation();
+              }}
+              className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-sky-500/20 hover:from-emerald-500/30 hover:to-sky-500/30 text-emerald-300 transition border border-emerald-500/40 flex items-center gap-1.5 text-xs font-semibold font-mono shadow-sm"
+              title="Konfirmasi Dua Arah: Pengirim 'Saya Sudah Membayar' & Penerima 'Owner Approve'"
+            >
+              <span>🤝</span>
+              <span>Konfirmasi 2-Arah</span>
+              {twoWayPendingCount !== undefined && twoWayPendingCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white font-mono text-[9px] font-bold animate-pulse">
+                  {twoWayPendingCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Dasbor Personal Peternak Quick Button */}
+          {onOpenPersonalDashboard && (
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playClick();
+                onOpenPersonalDashboard();
+              }}
+              className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-purple-600/30 via-indigo-600/30 to-blue-600/30 hover:from-purple-600/40 hover:to-blue-600/40 text-purple-200 transition border border-purple-500/50 flex items-center gap-1.5 text-xs font-semibold font-mono shadow-sm"
+              title="Buka Dasbor Personal Peternak & Monitoring Produksi Harian Otomatis"
+            >
+              <span>🧑‍🌾</span>
+              <span className="font-bold">Dasbor Personal</span>
+              {activeFarmerAccount?.status === 'PENDING_APPROVAL' && (
+                <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-black font-mono text-[9px] font-bold">
+                  PENDING
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Profil Peternak / Switcher Button with Avatar Photo */}
+          <button
+            type="button"
+            onClick={() => {
+              sounds.playClick();
+              if (onOpenFarmerSwitcher) {
+                onOpenFarmerSwitcher();
+              } else if (onOpenProfileModal) {
+                onOpenProfileModal();
+              }
+            }}
+            className="py-1.5 px-3 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 text-slate-200 transition border border-slate-700/80 flex items-center gap-2 text-xs font-semibold font-mono shadow-sm"
+            title="Ganti Akun Peternak / Unggah Foto Profil"
+          >
+            {activeFarmerAccount?.avatarUrl ? (
+              <img
+                src={activeFarmerAccount.avatarUrl}
+                alt={activeFarmerAccount.fullName}
+                className="w-5 h-5 rounded-full object-cover border border-purple-400"
+              />
+            ) : (
+              <User className="w-3.5 h-3.5 text-purple-400" />
+            )}
+            <span>{activeFarmerAccount?.fullName || userProfile?.fullName || 'Mudhofar'}</span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/30 text-purple-200 uppercase font-mono">
+              {activeFarmerAccount?.role || userProfile?.role || 'owner'}
+            </span>
+          </button>
+
+          {/* Real MetaMask Web3 Provider Connect Button */}
+          <Web3WalletButton
+            account={connectedMetaMaskAddress || null}
+            onConnect={onConnectMetaMask || (() => {})}
+            onDisconnect={onDisconnectMetaMask}
+            onOpenProfile={onOpenProfileModal}
+            balanceEth={metaMaskBalanceEth}
+          />
         </div>
       </div>
 
@@ -451,8 +614,8 @@ export const SovereignIdentityHeader: React.FC<SovereignIdentityHeaderProps> = (
         </div>
       </div>
 
-      {/* Dual Quick Action Callout Buttons */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+      {/* Quick Action Callout Buttons */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         {/* Top-Up QRIS / DANA */}
         <button
           type="button"
@@ -506,6 +669,40 @@ export const SovereignIdentityHeader: React.FC<SovereignIdentityHeaderProps> = (
             {t.withdrawSub}
           </p>
         </button>
+
+        {/* Barcode DANA / QRIS Merchant Callout */}
+        {onOpenQrisModal && (
+          <button
+            type="button"
+            onClick={() => {
+              sounds.playClick();
+              onOpenQrisModal();
+            }}
+            className="group p-4 rounded-2xl bg-gradient-to-br from-rose-950/40 via-slate-900 to-slate-950 border border-rose-500/50 hover:border-rose-400 hover:bg-slate-850 transition text-left shadow-lg relative overflow-hidden"
+          >
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/40 group-hover:scale-105 transition-transform flex items-center justify-center font-bold text-base shadow-sm">
+                  📲
+                </div>
+                <div>
+                  <span className="font-bold text-white text-sm block">
+                    Barcode QRIS / DANA
+                  </span>
+                  <span className="text-[10px] text-amber-300 font-mono">
+                    LUMPIA IPUL (NMID A01)
+                  </span>
+                </div>
+              </div>
+              <span className="text-rose-400 text-xs font-mono group-hover:translate-x-1 transition-transform">
+                &rarr;
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 pl-11">
+              Scan barcode nasional untuk top-up & transfer P2P langsung
+            </p>
+          </button>
+        )}
       </div>
     </div>
   );

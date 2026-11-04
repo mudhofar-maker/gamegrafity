@@ -14,13 +14,18 @@ import {
   AutoCompoundConfig,
   SupportedPaymentChannel,
   OwnerCashoutDestination,
+  CoopUnit,
+  UserProfileData,
+  FarmerAccount,
 } from './types/farm';
 import { INITIAL_CATALOG } from './data/catalogData';
 import { METAVERSE_COOP_CATALOG, INFRASTRUCTURE_PACKAGES } from './data/metaverseCoopData';
 import { getOrCreateSovereignWallet, IDR_PER_EGG } from './services/web3Service';
-import { formatRupiah, formatEth } from './utils/formatters';
+import { formatRupiah, formatEth, shortenAddress } from './utils/formatters';
 import { sounds } from './utils/soundEffects';
 import { calculateEmergencyDirective } from './utils/emergencyEngine';
+import { useMetaMask } from './hooks/useMetaMask';
+import { OWNER_METAMASK_ADDRESS } from './config/web3Config';
 
 import { SovereignIdentityHeader } from './components/SovereignIdentityHeader';
 import { EmergencyAlertBanner } from './components/EmergencyAlertBanner';
@@ -28,13 +33,17 @@ import { PoultryLifecyclePipeline } from './components/PoultryLifecyclePipeline'
 import { ClimateControlPanel } from './components/ClimateControlPanel';
 import { MarketPriceBoard } from './components/MarketPriceBoard';
 import { FarmVisualizer } from './components/FarmVisualizer';
+import { MultiCoopManager } from './components/MultiCoopManager';
 import { MetaverseCoopRental } from './components/MetaverseCoopRental';
 import { PartialAutoCompoundPanel } from './components/PartialAutoCompoundPanel';
 import { OwnerTreasurySettlementModal } from './components/OwnerTreasurySettlementModal';
+import { UserProfileModal } from './components/UserProfileModal';
 import { CatalogTable } from './components/CatalogTable';
 import { LiveLedger } from './components/LiveLedger';
 import { TopUpModal } from './components/TopUpModal';
 import { WithdrawModal } from './components/WithdrawModal';
+import { P2PQrisBarcodeModal } from './components/P2PQrisBarcodeModal';
+import { TwoWayConfirmationModal } from './components/TwoWayConfirmationModal';
 import { EtherscanModal } from './components/EtherscanModal';
 import { SmartContractViewer } from './components/SmartContractViewer';
 import { GramasiBusinessModal } from './components/GramasiBusinessModal';
@@ -42,6 +51,9 @@ import { AgroFiOracleBar } from './components/AgroFiOracleBar';
 import { GlobalFarmerOnboardingModal } from './components/GlobalFarmerOnboardingModal';
 import { GlobalCoopNetworkMap } from './components/GlobalCoopNetworkMap';
 import { GlobalReadinessAuditModal } from './components/GlobalReadinessAuditModal';
+import { PersonalFarmerDashboard } from './components/PersonalFarmerDashboard';
+import { FarmerAccountSwitcherModal } from './components/FarmerAccountSwitcherModal';
+import { SovereignMonetaryDirectiveModal } from './components/SovereignMonetaryDirectiveModal';
 import { SupportedLanguage, SupportedCurrency } from './utils/i18n';
 import { INITIAL_MARKET_PRICES } from './data/marketPriceData';
 import { ClimateMode, MarketPriceItem } from './types/farm';
@@ -167,6 +179,42 @@ export default function App() {
     },
   ]);
 
+  // Real MetaMask Web3 Provider Integration (window.ethereum)
+  const {
+    account: metaMaskAccount,
+    connect: connectMetaMask,
+    disconnect: disconnectMetaMask,
+    balanceEth: metaMaskBalanceEth,
+  } = useMetaMask();
+
+  // User Profile & Role Settings State (Default: Mudhofar, Owner)
+  const [userProfile, setUserProfile] = useState<UserProfileData>(() => {
+    return {
+      fullName: localStorage.getItem('gamegrafity_profile_name') || 'Mudhofar',
+      role: (localStorage.getItem('gamegrafity_profile_role') as 'owner' | 'peternak') || 'owner',
+      walletAddress: localStorage.getItem('gamegrafity_profile_wallet') || null,
+    };
+  });
+  const [isOpenProfileModal, setIsOpenProfileModal] = useState<boolean>(false);
+
+  // Multi-Coop Manager & Mesin Tetas State (Scalable: 10 -> 20 -> 40 -> 1.000 -> 6.000 ekor)
+  const [coops, setCoops] = useState<CoopUnit[]>([
+    {
+      id: 1,
+      name: 'Kandang Starter #1',
+      capacity: 150,
+      status: 'Active',
+      chickenCount: 40,
+      tier: 'Starter Semi-Closed',
+      dailyEggs: 35,
+      feedDailyKg: 5,
+      tempC: 24.2,
+      humidityRh: 65,
+      ammoniaPpm: 7.8,
+    },
+  ]);
+  const [totalHatcheryStock, setTotalHatcheryStock] = useState<number>(50);
+
   // Modal States
   const [isOpenTopUp, setIsOpenTopUp] = useState<boolean>(false);
   const [isOpenWithdraw, setIsOpenWithdraw] = useState<boolean>(false);
@@ -174,7 +222,17 @@ export default function App() {
   const [isOpenGramasiModal, setIsOpenGramasiModal] = useState<boolean>(false);
   const [isOpenEtherscanConsole, setIsOpenEtherscanConsole] = useState<boolean>(false);
   const [isOpenOwnerTreasuryModal, setIsOpenOwnerTreasuryModal] = useState<boolean>(false);
+  const [isOpenQrisModal, setIsOpenQrisModal] = useState<boolean>(false);
+  const [isOpenTwoWayModal, setIsOpenTwoWayModal] = useState<boolean>(false);
+  const [twoWayTargetService, setTwoWayTargetService] = useState<{ name: string; amountIdr: number; channel?: any } | undefined>(undefined);
+  const [twoWayPendingCount, setTwoWayPendingCount] = useState<number>(1);
   const [activeEtherscanReceipt, setActiveEtherscanReceipt] = useState<Web3TransactionReceipt | null>(null);
+
+  // Personalized Farmer Dashboard & User Management State
+  const [activeFarmerId, setActiveFarmerId] = useState<string>('farmer-ahmad');
+  const [activeFarmer, setActiveFarmer] = useState<FarmerAccount | null>(null);
+  const [isOpenFarmerSwitcher, setIsOpenFarmerSwitcher] = useState<boolean>(false);
+  const [isOpenMonetaryDirectiveModal, setIsOpenMonetaryDirectiveModal] = useState<boolean>(false);
 
   // Active Metaverse Coop & Infrastructure Rental State
   const [activeCoopRental, setActiveCoopRental] = useState<ActiveCoopRental | null>({
@@ -252,6 +310,50 @@ export default function App() {
     }
   }, [emergencyDirective.urgencyLevel, cycle.cohorts.sickChicksCount]);
 
+  // Fetch active farmer account data
+  const fetchActiveFarmer = async () => {
+    try {
+      const res = await fetch(`/api/farmer-accounts/${activeFarmerId}`);
+      const data = await res.json();
+      if (data.success && data.account) {
+        setActiveFarmer(data.account);
+      }
+    } catch (err) {
+      console.error('Failed to fetch active farmer account:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchActiveFarmer();
+  }, [activeFarmerId]);
+
+  // Automated daily production runner: ticks eggs & sensors every 8 seconds when active
+  useEffect(() => {
+    if (!activeFarmer || activeFarmer.status !== 'ACTIVE') return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/farmer-accounts/${activeFarmer.id}/production-tick`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ incrementEggs: 4 })
+        });
+        const data = await res.json();
+        if (data.success && data.liveProduction) {
+          setActiveFarmer((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              liveProduction: data.liveProduction
+            };
+          });
+        }
+      } catch (_) {}
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [activeFarmer?.id, activeFarmer?.status]);
+
   // Helper to add ledger entry
   const addLedger = (
     title: string,
@@ -319,10 +421,185 @@ export default function App() {
       setFarmer((prev) => ({
         ...prev,
         mode: 'legacy',
-        name: 'Riska',
+        name: userProfile.fullName || 'Riska',
         isSmartContractActive: false,
       }));
     }
+  };
+
+  // Synchronize MetaMask Web3 Provider Account when connected
+  useEffect(() => {
+    if (metaMaskAccount) {
+      setFarmer((prev) => ({
+        ...prev,
+        walletAddress: metaMaskAccount,
+        mode: 'sovereign',
+        name: `${metaMaskAccount.substring(0, 6)}...${metaMaskAccount.substring(metaMaskAccount.length - 4)} (${userProfile.fullName || 'Sovereign'})`,
+        isSmartContractActive: true,
+      }));
+      setUserProfile((prev) => ({
+        ...prev,
+        walletAddress: metaMaskAccount,
+      }));
+      addLedger(
+        'METAMASK WEB3 TERHUBUNG',
+        `Dompet MetaMask terhubung (${shortenAddress(metaMaskAccount)}). Saldo: ${metaMaskBalanceEth || '0.00'} ETH. Transaksi on-chain terarah langsung ke Treasury Owner ${OWNER_METAMASK_ADDRESS}.`,
+        'SYSTEM',
+        true
+      );
+    }
+  }, [metaMaskAccount, metaMaskBalanceEth, userProfile.fullName]);
+
+  // Polling / initial fetch for Two-Way Confirmation pending count
+  useEffect(() => {
+    const fetchPending = async () => {
+      try {
+        const res = await fetch('/api/p2p/two-way-confirmations');
+        const data = await res.json();
+        if (data.success && typeof data.pendingCount === 'number') {
+          setTwoWayPendingCount(data.pendingCount);
+        }
+      } catch (_) {}
+    };
+    fetchPending();
+    const interval = setInterval(fetchPending, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handle Two-Way Payment Approved by Owner/Admin
+  const handlePaymentApprovedFromTwoWay = (record: any) => {
+    // 1. Credit Kas Treasury Owner
+    setBalances((prev) => ({
+      ...prev,
+      kasTreasuryOwner: prev.kasTreasuryOwner + (record.amountIdr || 0),
+    }));
+
+    // 2. Unlock module or activate package if matches
+    if (record.serviceName?.includes('Pro IoT') || record.serviceName?.includes('Starter') || record.serviceName?.includes('Sovereign')) {
+      const durationDays = 30;
+      const newExpires = Date.now() + durationDays * 86400 * 1000;
+      setActiveCoopRental(() => ({
+        coopId: record.serviceName.includes('Pro IoT') ? 'kandang-bertingkat-iot' : 'kandang-standar',
+        name: record.serviceName,
+        tier: record.serviceName.includes('Pro IoT') ? 'Smart Multi-Tier Closed House' : 'Starter Semi-Closed',
+        status: 'AKTIF',
+        rentedAt: Date.now(),
+        expiresAt: newExpires,
+        durationDays,
+        monthlyRentIdr: record.amountIdr,
+        contractCode: record.contractCode || 'COOP-TWOWAY-' + Math.floor(1000 + Math.random() * 9000),
+        txHash: record.txHash || '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
+        capacityBirds: record.serviceName.includes('Mega') ? 1500 : record.serviceName.includes('Pro IoT') ? 500 : 150,
+        iotTelemetry: {
+          tempC: cycle.ambientTempC,
+          targetTempC: cycle.targetTempC,
+          humidityRh: cycle.humidityRh,
+          targetHumidityRh: 65,
+          ammoniaPpm: 7.2,
+          coolingPadActive: true,
+          exhaustFanRpm: 1450,
+          airVelocityMs: 2.4,
+          lastSyncTime: 'Real-Time IoT Active (Approved)',
+          sensorHealthPercent: 100,
+        },
+      }));
+    } else if (record.serviceName?.includes('Top-Up')) {
+      setBalances((prev) => ({
+        ...prev,
+        saldoDompetSaya: prev.saldoDompetSaya + (record.amountIdr || 0),
+      }));
+    }
+
+    // 3. Add to Live Ledger
+    addLedger(
+      'KONFIRMASI 2-ARAH: OWNER APPROVE',
+      `Penerima (${record.receiverApprovedBy || 'Mudhofar'}) telah memvalidasi mutasi DANA dan menyetujui pembayaran ${record.id} (${formatRupiah(record.amountIdr)}). Akses '${record.unlockedModule}' resmi aktif!`,
+      'SYSTEM',
+      true,
+      record.amountIdr,
+      undefined,
+      record.txHash
+    );
+
+    setTwoWayPendingCount((prev) => Math.max(0, prev - 1));
+  };
+
+  // ======================== MANAJEMEN MULTI-KANDANG & MESIN TETAS (10 - 6.000 EKOR) ========================
+  const handleAddCoop = (newCoop: CoopUnit, costIdr: number) => {
+    // Potong saldo dompet peternak & setorkan ke Kas Treasury Owner (+Rp 750.000)
+    setBalances((prev) => ({
+      ...prev,
+      saldoDompetSaya: Math.max(0, prev.saldoDompetSaya - costIdr),
+      kasTreasuryOwner: prev.kasTreasuryOwner + costIdr,
+    }));
+
+    setCoops((prev) => [...prev, newCoop]);
+
+    // Sinkronisasi pertumbuhan biologis ke cycle
+    setCycle((prev) => ({
+      ...prev,
+      population: prev.population + newCoop.chickenCount,
+      hens: prev.hens + newCoop.chickenCount,
+      landPlots: prev.landPlots + 1,
+      cohorts: {
+        ...prev.cohorts,
+        layerProductiveCount: prev.cohorts.layerProductiveCount + newCoop.chickenCount,
+      },
+    }));
+
+    addLedger(
+      'EKSPANSI MULTI-KANDANG & SUPLAI HULU',
+      `Membuka ${newCoop.name} (Kapasitas: ${newCoop.capacity} ekor). Biaya sewa lahan & suplai hulu ${formatRupiah(costIdr)} disetorkan ke Kas Treasury Owner. Total ayam bertambah +${newCoop.chickenCount} ekor menuju target 6.000 ekor.`,
+      'PURCHASE',
+      true,
+      costIdr
+    );
+
+    try {
+      fetch('/api/multi-coops/expand', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ costIdr, farmerAddress: metaMaskAccount || signerWallet.address }),
+      }).catch(() => {});
+    } catch (_) {}
+  };
+
+  const handleIncubateHatch = (coopId: number, count: number) => {
+    if (totalHatcheryStock < count) return;
+
+    setTotalHatcheryStock((prev) => Math.max(0, prev - count));
+    setCoops((prev) =>
+      prev.map((c) => {
+        if (c.id === coopId) {
+          const newCount = Math.min(c.capacity, c.chickenCount + count);
+          return {
+            ...c,
+            chickenCount: newCount,
+            status: newCount >= c.capacity ? 'Full' : 'Active',
+            dailyEggs: Math.floor(newCount * 0.88),
+            feedDailyKg: Math.round(newCount * 0.12),
+          };
+        }
+        return c;
+      })
+    );
+
+    setCycle((prev) => ({
+      ...prev,
+      population: prev.population + count,
+      hens: prev.hens + count,
+      cohorts: {
+        ...prev.cohorts,
+        layerProductiveCount: prev.cohorts.layerProductiveCount + count,
+      },
+    }));
+
+    addLedger(
+      'MENETASKAN DOC MESIN TETAS',
+      `Menetaskan ${count} ekor DOC dari mesin tetas ke Kandang #${coopId}. Pertumbuhan populasi unggas berdaulat tanpa modal luar.`,
+      'CYCLE',
+      true
+    );
   };
 
   // Handler saat peternak dunia menyelesaikan pendaftaran global
@@ -1653,10 +1930,42 @@ export default function App() {
           const el = document.getElementById('metaverse-coop-section');
           if (el) el.scrollIntoView({ behavior: 'smooth' });
         }}
+        onScrollToMultiCoop={() => {
+          const el = document.getElementById('multi-coop-manager-section');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onOpenProfileModal={() => setIsOpenProfileModal(true)}
+        onOpenQrisModal={() => setIsOpenQrisModal(true)}
+        onOpenTwoWayConfirmation={() => setIsOpenTwoWayModal(true)}
+        twoWayPendingCount={twoWayPendingCount}
+        connectedMetaMaskAddress={metaMaskAccount}
+        onConnectMetaMask={connectMetaMask}
+        onDisconnectMetaMask={disconnectMetaMask}
+        metaMaskBalanceEth={metaMaskBalanceEth}
+        userProfile={{ fullName: userProfile.fullName, role: userProfile.role }}
+        activeFarmerAccount={activeFarmer}
+        onOpenPersonalDashboard={() => {
+          const el = document.getElementById('personal-farmer-dashboard-section');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onOpenFarmerSwitcher={() => setIsOpenFarmerSwitcher(true)}
+        onOpenMonetaryDirective={() => setIsOpenMonetaryDirectiveModal(true)}
         farmerCountryFlag={farmerCountry.flag}
         farmerCountryName={farmerCountry.name}
         farmerFlockSize={farmerCountry.flockSize}
       />
+
+      {/* 1.5. DASBOR PERSONAL PETERNAK & MANAJEMEN PENGGUNA MANDIRI */}
+      <div id="personal-farmer-dashboard-section" className="scroll-mt-6">
+        <PersonalFarmerDashboard
+          farmer={activeFarmer}
+          onRefresh={fetchActiveFarmer}
+          onSwitchFarmerRequest={() => setIsOpenFarmerSwitcher(true)}
+          currentUserRole={userProfile.role}
+          onOpenOwnerSettlement={() => setIsOpenOwnerTreasuryModal(true)}
+          onOpenQrisModal={() => setIsOpenQrisModal(true)}
+        />
+      </div>
 
       {/* 2. AUTOMATED EMERGENCY ALARM & TRIAGE DIRECTIVE (Requested feature) */}
       <EmergencyAlertBanner
@@ -1712,7 +2021,19 @@ export default function App() {
         onOpenWithdrawWithTargetPrice={() => setIsOpenWithdraw(true)}
       />
 
-      {/* 7. KANDANG METAVERSE & SEWA INFRASTRUKTUR (Katalog Paket Bundling, Simulasi Net Profit, Sewa, IoT & Countdown) */}
+      {/* 7. MANAJEMEN MULTI-KANDANG & MESIN TETAS (Skala Peternak 10 -> 40 -> 1.000 -> 6.000 Ekor) */}
+      <MultiCoopManager
+        coops={coops}
+        onAddCoop={handleAddCoop}
+        onIncubateHatch={handleIncubateHatch}
+        saldoDompetSaya={balances.saldoDompetSaya}
+        kasTreasuryOwner={balances.kasTreasuryOwner}
+        accumulatedEggs={cycle.accumulatedEggs}
+        totalHatcheryStock={totalHatcheryStock}
+        onOpenTopUp={() => setIsOpenTopUp(true)}
+      />
+
+      {/* 8. KANDANG METAVERSE & SEWA INFRASTRUKTUR (Katalog Paket Bundling, Simulasi Net Profit, Sewa, IoT & Countdown) */}
       <MetaverseCoopRental
         saldoDompetSaya={balances.saldoDompetSaya}
         kasTreasuryOwner={balances.kasTreasuryOwner}
@@ -1730,6 +2051,10 @@ export default function App() {
         onInspectEtherscan={handleOpenEtherscanByHash}
         ambientTempC={cycle.ambientTempC}
         humidityRh={cycle.humidityRh}
+        onOpenTwoWayConfirmation={(service) => {
+          setTwoWayTargetService(service);
+          setIsOpenTwoWayModal(true);
+        }}
       />
 
       {/* 8. FITUR PARTIAL AUTO-COMPOUND (Komponding Sebagian Otomatis: 50-60% Tunai : 40-50% Diputar) */}
@@ -1840,6 +2165,10 @@ export default function App() {
               }
             : undefined
         }
+        onOpenTwoWayConfirmation={(service) => {
+          setTwoWayTargetService(service);
+          setIsOpenTwoWayModal(true);
+        }}
       />
 
       <WithdrawModal
@@ -1854,6 +2183,27 @@ export default function App() {
         onWeb3Success={handleWeb3Success}
         onOpenEtherscan={handleOpenEtherscan}
         onActivateSovereignMode={activateSovereignMode}
+        onOpenQrisModal={() => setIsOpenQrisModal(true)}
+      />
+
+      {/* Real National QRIS / DANA P2P Payment Barcode Modal */}
+      <P2PQrisBarcodeModal
+        isOpen={isOpenQrisModal}
+        onClose={() => setIsOpenQrisModal(false)}
+        onOpenTwoWayConfirmation={(service) => {
+          setTwoWayTargetService(service);
+          setIsOpenTwoWayModal(true);
+        }}
+      />
+
+      {/* Konfirmasi Dua Arah Modal (Pengirim 'Saya Sudah Membayar' & Penerima 'Owner Approve') */}
+      <TwoWayConfirmationModal
+        isOpen={isOpenTwoWayModal}
+        onClose={() => setIsOpenTwoWayModal(false)}
+        userRole={userProfile.role}
+        userName={userProfile.fullName}
+        initialService={twoWayTargetService}
+        onPaymentApproved={handlePaymentApprovedFromTwoWay}
       />
 
       <EtherscanModal
@@ -1917,6 +2267,52 @@ export default function App() {
         kasTreasuryOwner={balances.kasTreasuryOwner}
         ethBalance={balances.ethBalance}
         onExecuteOwnerCashout={handleExecuteOwnerCashout}
+      />
+
+      {/* User Profile & Web3 MetaMask Wallet Settings Modal (Mudhofar / Owner) */}
+      <UserProfileModal
+        isOpen={isOpenProfileModal}
+        onClose={() => setIsOpenProfileModal(false)}
+        currentWalletAddress={metaMaskAccount || userProfile.walletAddress}
+        onConnectMetaMask={connectMetaMask}
+        onProfileUpdated={(updated) => {
+          setUserProfile({
+            fullName: updated.fullName,
+            role: updated.role,
+            walletAddress: updated.walletAddress,
+          });
+          setFarmer((prev) => ({
+            ...prev,
+            name: `${(updated.walletAddress || prev.walletAddress).substring(0, 6)}... (${updated.fullName})`,
+          }));
+          addLedger(
+            'PROFIL PENGGUNA DIPERBARUI',
+            `Profil '${updated.fullName}' (${updated.role === 'owner' ? 'Owner / Pengelola' : 'Peternak Lapangan'}) dan alamat dompet MetaMask berhasil disinkronisasi ke sistem.`,
+            'SYSTEM',
+            true
+          );
+        }}
+      />
+
+      {/* Multi-Farmer Account Switcher & Registration Modal (Data Isolation) */}
+      <FarmerAccountSwitcherModal
+        isOpen={isOpenFarmerSwitcher}
+        onClose={() => setIsOpenFarmerSwitcher(false)}
+        activeFarmerId={activeFarmerId}
+        onSelectFarmer={(id) => {
+          setActiveFarmerId(id);
+          sounds.playSuccess();
+        }}
+        onAccountsUpdated={fetchActiveFarmer}
+        onOpenQrisModal={() => setIsOpenQrisModal(true)}
+      />
+
+      {/* Sovereign Ecosystem Core Backend Mathematical & Monetary Directive Modal */}
+      <SovereignMonetaryDirectiveModal
+        isOpen={isOpenMonetaryDirectiveModal}
+        onClose={() => setIsOpenMonetaryDirectiveModal(false)}
+        activeFarmerId={activeFarmerId}
+        onRefreshParent={fetchActiveFarmer}
       />
     </div>
   );

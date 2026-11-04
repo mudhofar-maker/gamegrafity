@@ -399,3 +399,252 @@ export interface ActiveCoopRental {
   };
 }
 
+export type CoopUnitStatus = 'Active' | 'Hatching' | 'Full';
+
+export interface CoopUnit {
+  id: number;
+  name?: string;
+  capacity: number;
+  status: CoopUnitStatus;
+  chickenCount: number;
+  tier?: string;
+  dailyEggs?: number;
+  feedDailyKg?: number;
+  tempC?: number;
+  humidityRh?: number;
+  ammoniaPpm?: number;
+  lastHatchBatchId?: string;
+}
+
+export interface UserProfileData {
+  fullName: string;
+  role: 'owner' | 'peternak';
+  walletAddress: string | null;
+  email?: string;
+  phone?: string;
+  preferredNetwork?: string;
+  updatedAt?: string;
+}
+
+export interface Web3WalletState {
+  address: string | null;
+  chainId: number | null;
+  isConnected: boolean;
+  isMetaMask: boolean;
+  balanceEth: string | null;
+  ensName?: string | null;
+  isOwnerWallet: boolean;
+}
+
+export type TwoWaySenderStatus = 'BELUM_BAYAR' | 'SUDAH_BAYAR';
+export type TwoWayReceiverStatus = 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
+
+export interface TwoWayPaymentRecord {
+  id: string;
+  senderName: string;
+  senderWalletOrPhone: string;
+  serviceName: string;
+  amountIdr: number;
+  paymentChannel: 'DANA_P2P' | 'QRIS' | 'BCA' | 'WEB3_WALLET';
+  merchantTarget: string;
+  senderStatus: TwoWaySenderStatus;
+  senderConfirmedAt?: string;
+  senderProofNote?: string;
+  receiverStatus: TwoWayReceiverStatus;
+  receiverApprovedAt?: string;
+  receiverApprovedBy?: string;
+  unlockedModule: string;
+  createdAt: string;
+  txHash?: string;
+  contractCode?: string;
+}
+
+export interface TreasuryReservePool {
+  totalReserveBalanceIdr: number;
+  infrastructureInflowsIdr: number;
+  workingCapitalDeployedIdr: number;
+  realizedMarketSalesIdr: number;
+  netSpreadSurplusAccumulatedIdr: number;
+  reserveBufferHealthPercent: number;
+  totalActiveFarmersCount: number;
+  lastUpdated: string;
+}
+
+export interface DynamicMarginRule {
+  commodity: string;
+  commodityKey: string;
+  realtimeMarketPricePerKg: number;
+  mandatorySpreadPercent: number;
+  lockedFarmerBuyPricePerKg: number;
+  guaranteedSurplusPerKg: number;
+  guaranteedSurplusPercent: number;
+  status: 'LOCKED_POSITIVE_SURPLUS';
+  benchmarkSource: string;
+}
+
+export interface AssetToCashBatch {
+  batchId: string;
+  timestamp: string;
+  eggCount: number;
+  weightKg: number;
+  commodityType: string;
+  farmerBuyPriceKg: number;
+  farmerPaidIdr: number;
+  realizedMarketPriceKg: number;
+  realizedGrossSaleIdr: number;
+  replenishedCostBasisIdr: number;
+  netCashSurplusGeneratedIdr: number;
+  status: 'IN_WAREHOUSE' | 'REALIZED_TO_CASH';
+  offtakerName: string;
+  txHash: string;
+}
+
+export interface PhysicalCommodityInventory {
+  eggsCount: number;
+  weightKg: number;
+  commodity: string;
+  costBasisIdr: number;
+  batchesCount: number;
+  estimatedMarketValueIdr: number;
+  unrealizedSurplusIdr: number;
+}
+
+export type FarmerAccountStatus = 'PENDING_APPROVAL' | 'ACTIVE' | 'REJECTED';
+
+export interface BrokerAbsorptionRecord {
+  id: string;
+  batchCode: string;
+  date: string;
+  eggCount: number;
+  weightKg: number;
+  grade: EggGrade;
+  pricePerKg: number;
+  payoutIdr: number;
+  brokerName: string;
+  status: 'SETTLED' | 'PROCESSING';
+  txHash: string;
+}
+
+export interface FarmerRentalPackageState {
+  id: string;
+  name: string;
+  tierLevel: 'starter' | 'pro' | 'sovereign';
+  monthlyCostIdr: number;
+  capacityBirds: number;
+  requestedAt: string;
+  approvedAt?: string;
+  expiresAt?: number;
+  paymentProofNote?: string;
+  paymentChannel?: string;
+  contractCode?: string;
+}
+
+export interface FarmerLiveProductionState {
+  population: number;
+  roosters: number;
+  hens: number;
+  dailyEggsExpected: number;
+  dailyFeedKg: number;
+  dailyProductionRunningEggs: number;
+  accumulatedEggsReady: number;
+  totalHarvestedAllTime: number;
+  totalGramasiKgAllTime: number;
+  totalEarningsIdr: number;
+  walletBalanceIdr: number;
+  iotSensor: {
+    tempC: number;
+    humidityRh: number;
+    ammoniaPpm: number;
+    exhaustRpm: number;
+    coolingPadActive: boolean;
+  };
+  cohorts: {
+    docCount: number;
+    pulletCount: number;
+    layerCount: number;
+    afkirCount: number;
+  };
+}
+
+export interface FarmerAccount {
+  id: string;
+  fullName: string;
+  username: string;
+  email: string;
+  phone: string;
+  avatarUrl: string;
+  location: string;
+  walletAddress: string;
+  role: 'peternak' | 'owner';
+  registeredAt: string;
+  status: FarmerAccountStatus;
+  rentalPackage: FarmerRentalPackageState;
+  liveProduction: FarmerLiveProductionState;
+  brokerAbsorptions: BrokerAbsorptionRecord[];
+}
+
+export interface SovereignHPPBreakdown {
+  feedCostPerKg: number;
+  docAmortizationPerKg: number;
+  energyKwhClimatePerKg: number;
+  doctorBiosecurityPerKg: number;
+  totalHPPPerKg: number;
+  hppPerEgg: number;
+}
+
+export interface SovereignPricingValidation {
+  commodityKey: string;
+  commodityName: string;
+  HPP_per_kg: number;
+  H_broker_per_kg: number;
+  P_realtime_per_kg: number;
+  farmerNetMarginPerKg: number;
+  farmerNetMarginPercent: number;
+  brokerGuaranteedSpreadPerKg: number;
+  brokerGuaranteedSpreadPercent: number;
+  formula: string;
+  isValid: boolean;
+}
+
+export interface SovereignFlowRateMetrics {
+  dV_system_dt_per_hour: number;
+  dQ_dt_eggs_per_hour: number;
+  dQ_dt_kg_per_hour: number;
+  dQ_dt_burn_idr_per_hour: number;
+  netFlowDifferentialPerHour: number;
+  isFlowSynchronized: boolean;
+  pacingIntervalSeconds: number;
+  recommendedAutoCompoundPercent: number;
+  pacingMode: 'NORMAL' | 'PACED_STABILITY' | 'HIGH_VOLUME_COMPOUND';
+}
+
+export interface SovereignMonetaryDirectiveState {
+  status: 'LOCKED & ACTIVE';
+  V_system: number; // Treasury Reserve IDR
+  Q_total_pending_eggs: number; // Total butir siap panen across all coops
+  Q_total_pending_kg: number; // Total bobot kg
+  H_broker_average: number; // Weighted average broker buy price
+  V_harvest: number; // Q * H_broker total liability
+  alpha_buffer: number; // 0.15 (15% emergency liquidity buffer)
+  required_reserve_with_buffer: number; // (1 + alpha) * V_harvest
+  reserve_surplus_idr: number; // V_system - required_reserve_with_buffer
+  liquidity_ratio_percent: number; // (V_system / required_reserve) * 100
+  isInvariantSatisfied: boolean; // V_system >= (1 + alpha) * V_harvest
+  expansionStatus: 'PERMITTED' | 'THROTTLED_BUFFER_PROTECTION';
+  hppBreakdown: SovereignHPPBreakdown;
+  pricingValidations: SovereignPricingValidation[];
+  flowRate: SovereignFlowRateMetrics;
+  infiniteAbsorption: {
+    totalAbsorbedAllTimeEggs: number;
+    totalAbsorbedAllTimeKg: number;
+    totalCashPaidToFarmersIdr: number;
+    zeroRejectionGuarantee: boolean;
+    mortalityRiskRatePercent: number;
+  };
+  lastEvaluatedAt: string;
+}
+
+
+
+
+

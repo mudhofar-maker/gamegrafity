@@ -30,6 +30,7 @@ interface TopUpModalProps {
     name: string;
     priceIdr: number;
   };
+  onOpenTwoWayConfirmation?: (service: { name: string; amountIdr: number; channel?: SupportedPaymentChannel }) => void;
 }
 
 export const TopUpModal: React.FC<TopUpModalProps> = ({
@@ -38,7 +39,8 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
   onSuccess,
   actorName,
   initialAmount,
-  targetPackage
+  targetPackage,
+  onOpenTwoWayConfirmation
 }) => {
   const [selectedAmount, setSelectedAmount] = useState<number>(initialAmount || targetPackage?.priceIdr || 100000);
   const [customAmount, setCustomAmount] = useState<string>('');
@@ -270,9 +272,9 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
               <span className="text-[11px] font-mono text-slate-400">
                 {paymentMethod === 'BCA' && 'Virtual Account BCA: '}
                 {paymentMethod === 'WEB3_WALLET' && 'Smart Contract Treasury: '}
-                {(paymentMethod === 'QRIS' || paymentMethod === 'DANA') && 'NMID: '}
+                {(paymentMethod === 'QRIS' || paymentMethod === 'DANA') && 'NMID (LUMPIA IPUL): '}
                 <strong className="text-slate-200">
-                  {paymentMethod === 'BCA' ? '880192837465201' : paymentMethod === 'WEB3_WALLET' ? '0x89D2...0359' : 'ID1020304918239'}
+                  {paymentMethod === 'BCA' ? '880192837465201' : paymentMethod === 'WEB3_WALLET' ? '0x89D2...0359' : 'ID1026601649688'}
                 </strong>
               </span>
               <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
@@ -280,48 +282,52 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
               </span>
             </div>
 
-            {/* Visual based on channel */}
-            {paymentMethod === 'QRIS' && (
-              <div className="p-3 bg-white rounded-xl shadow-inner relative group">
-                <svg className="w-40 h-40" viewBox="0 0 100 100" fill="none">
-                  <rect width="100" height="100" fill="white" />
-                  <rect x="5" y="5" width="26" height="26" fill="black" />
-                  <rect x="9" y="9" width="18" height="18" fill="white" />
-                  <rect x="13" y="13" width="10" height="10" fill="black" />
-                  <rect x="69" y="5" width="26" height="26" fill="black" />
-                  <rect x="73" y="9" width="18" height="18" fill="white" />
-                  <rect x="77" y="13" width="10" height="10" fill="black" />
-                  <rect x="5" y="69" width="26" height="26" fill="black" />
-                  <rect x="9" y="73" width="18" height="18" fill="white" />
-                  <rect x="13" y="77" width="10" height="10" fill="black" />
-                  <path d="M36 8h4v4h-4zm8 0h4v4h-4zm12 0h4v4h-4zm-20 8h4v4h-4zm8 0h4v4h-4zm16 0h4v4h-4zm-24 8h4v4h-4zm12 0h4v4h-4zm8 0h4v4h-4zm8 0h4v4h-4zM8 36h4v4h-4zm8 0h4v4h-4zm16 0h4v4h-4zm8 0h4v4h-4zm12 0h4v4h-4zm8 0h4v4h-4zm16 0h4v4h-4zm8 0h4v4h-4zm-80 8h4v4h-4zm16 0h4v4h-4zm12 0h4v4h-4zm16 0h4v4h-4zm8 0h4v4h-4zm12 0h4v4h-4zm12 0h4v4h-4zm-76 8h4v4h-4zm8 0h4v4h-4zm16 0h4v4h-4zm8 0h4v4h-4zm16 0h4v4h-4zm8 0h4v4h-4zm8 0h4v4h-4z" fill="#0f172a" />
-                  <circle cx="50" cy="50" r="12" fill="#0f172a" />
-                  <path d="M45 50l3 3 7-7" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <div className="mt-1 text-[8px] font-bold tracking-widest text-slate-800 uppercase font-sans">
-                  QRIS • STANDAR PEMBAYARAN NASIONAL
+            {/* Visual based on channel: Real QRIS Barcode Lumpia Ipul */}
+            {(paymentMethod === 'QRIS' || paymentMethod === 'DANA') && (
+              <div className="w-full max-w-[280px] p-3 bg-white rounded-2xl shadow-xl flex flex-col items-center border-2 border-red-500/40 my-1">
+                <div className="w-full flex items-center justify-between pb-1 mb-1 border-b border-slate-200">
+                  <div className="text-left">
+                    <span className="text-[8px] font-bold text-slate-800 font-sans block">QR Code Standar Pembayaran Nasional</span>
+                    <span className="text-[11px] font-extrabold text-red-700 block">LUMPIA IPUL</span>
+                  </div>
+                  <span className="text-[8px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-200">GPN</span>
                 </div>
-              </div>
-            )}
 
-            {paymentMethod === 'DANA' && (
-              <div className="w-full p-4 bg-sky-950/40 rounded-xl border border-sky-500/30 text-left space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Nomor Akun Merchant DANA:</span>
-                  <span className="font-mono text-sky-300 font-bold">0812-9988-7766</span>
+                <div className="w-full text-center py-0.5 text-[9px] font-mono text-slate-700 bg-slate-50 rounded mb-1">
+                  NMID: <strong className="text-slate-900">ID1026601649688</strong> • A01
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Nama Penerima:</span>
-                  <span className="font-mono text-white font-bold">Gamegrafity Agro-Fi Sovereign</span>
+
+                {/* Real Barcode Image */}
+                <div className="w-full max-h-[220px] overflow-hidden rounded-xl border border-slate-200 flex items-center justify-center bg-white my-1">
+                  <img
+                    src="/assets/aistudio/Screenshot_20261012-140910_f358145d.png"
+                    alt="Barcode QRIS Lumpia Ipul DANA P2P"
+                    className="w-full h-auto object-contain"
+                  />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleCopy('081299887766')}
-                  className="w-full py-1.5 rounded-lg bg-sky-600/30 hover:bg-sky-600/50 text-sky-200 text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition border border-sky-500/40"
-                >
-                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  Salin Nomor DANA
-                </button>
+
+                <div className="w-full text-center pt-1 text-[8px] font-bold text-red-700 uppercase tracking-wider font-sans">
+                  SATU QRIS UNTUK SEMUA (DANA & SEMUA BANK)
+                </div>
+
+                <div className="w-full mt-2 flex items-center justify-between gap-1 pt-1.5 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => handleCopy('ID1026601649688')}
+                    className="flex-1 py-1 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-bold flex items-center justify-center gap-1 transition"
+                  >
+                    {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-slate-600" />}
+                    Salin NMID
+                  </button>
+                  <a
+                    href="/assets/aistudio/Screenshot_20261012-140910_f358145d.png"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="py-1 px-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-[10px] font-mono font-bold flex items-center justify-center gap-1 transition"
+                  >
+                    Buka Penuh
+                  </a>
+                </div>
               </div>
             )}
 
@@ -387,27 +393,48 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
             </div>
           </div>
 
-          {/* Action Button: Konfirmasi Pembayaran Lunas */}
-          <button
-            type="button"
-            disabled={isProcessing || currentAmount <= 0}
-            onClick={handleSimulatePayment}
-            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 transition active:scale-[0.98] disabled:opacity-50"
-          >
-            {isProcessing ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Memvalidasi Pembayaran & Mengaktifkan Smart Contract...</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-emerald-200" />
-                <span>
-                  Konfirmasi Pembayaran Lunas ({formatRupiah(currentAmount)}) &rarr;
-                </span>
-              </>
+          {/* Action Button: Konfirmasi Pembayaran Pengirim */}
+          <div className="space-y-2">
+            <button
+              type="button"
+              disabled={isProcessing || currentAmount <= 0}
+              onClick={handleSimulatePayment}
+              className="w-full py-4 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-extrabold text-sm tracking-wide shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 transition active:scale-[0.98] disabled:opacity-50"
+            >
+              {isProcessing ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Memvalidasi Pembayaran & Mengaktifkan Smart Contract...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                  <span>
+                    Saya Sudah Membayar ({formatRupiah(currentAmount)}) &rarr;
+                  </span>
+                </>
+              )}
+            </button>
+
+            {onOpenTwoWayConfirmation && (
+              <button
+                type="button"
+                onClick={() => {
+                  sounds.playClick();
+                  onOpenTwoWayConfirmation({
+                    name: targetPackage?.name || `Top-Up Saldo Dompet ${formatRupiah(currentAmount)}`,
+                    amountIdr: currentAmount,
+                    channel: paymentMethod
+                  });
+                  onClose();
+                }}
+                className="w-full py-2 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-mono text-xs font-bold border border-amber-500/40 transition flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <span>🤝</span>
+                <span>Buka Panel Konfirmasi 2-Arah (Menunggu Approve Owner)</span>
+              </button>
             )}
-          </button>
+          </div>
 
           {/* Instant Activation Guarantees */}
           <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">

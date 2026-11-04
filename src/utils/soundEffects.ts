@@ -107,6 +107,11 @@ class SoundManager {
     });
   }
 
+  // Generic success chime
+  playSuccess() {
+    this.playWeb3Success();
+  }
+
   // QRIS Scan Beep
   playQrisScan() {
     if (!this.enabled) return;

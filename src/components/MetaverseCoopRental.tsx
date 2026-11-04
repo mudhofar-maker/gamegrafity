@@ -44,6 +44,7 @@ interface MetaverseCoopRentalProps {
   onInspectEtherscan?: (txHash: string) => void;
   ambientTempC?: number;
   humidityRh?: number;
+  onOpenTwoWayConfirmation?: (service: { name: string; amountIdr: number; channel?: any }) => void;
 }
 
 export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
@@ -57,6 +58,7 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
   onInspectEtherscan,
   ambientTempC = 24.2,
   humidityRh = 65,
+  onOpenTwoWayConfirmation,
 }) => {
   // Tabs: 'packages' (Bundled Packages) | 'simulator' (Net Profit Calculator) | 'table' (Individual Coops) | 'iot' (Live Telemetry & Countdown) | 'specs'
   const [activeTab, setActiveTab] = useState<'packages' | 'simulator' | 'table' | 'iot' | 'specs'>('packages');
@@ -580,6 +582,25 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
                       <span className="text-[10px] text-amber-400/90 text-center block mt-1.5 font-mono">
                         Saldo kurang {formatRupiah(pkg.totalMonthlyRentIdr - saldoDompetSaya)}. Klik untuk bayar via QRIS / DANA / BCA / Web3 & aktifkan seketika.
                       </span>
+                    )}
+
+                    {onOpenTwoWayConfirmation && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          sounds.playClick();
+                          onOpenTwoWayConfirmation({
+                            name: pkg.name,
+                            amountIdr: pkg.totalMonthlyRentIdr,
+                            channel: 'DANA_P2P'
+                          });
+                        }}
+                        className="w-full mt-2 py-1.5 px-3 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 font-mono text-[10px] flex items-center justify-center gap-1.5 transition"
+                        title="Konfirmasi Dua Arah: Pengirim 'Saya Sudah Membayar' & Penerima 'Owner Approve'"
+                      >
+                        <span>🤝</span>
+                        <span>Konfirmasi 2-Arah (Saya Sudah Membayar)</span>
+                      </button>
                     )}
                   </div>
                 </div>

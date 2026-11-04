@@ -20,6 +20,7 @@ interface WithdrawModalProps {
   onWeb3Success: (receipt: Web3TransactionReceipt, eggCountSold: number) => void;
   onOpenEtherscan: (receipt: Web3TransactionReceipt) => void;
   onActivateSovereignMode: () => void;
+  onOpenQrisModal?: () => void;
 }
 
 export const WithdrawModal: React.FC<WithdrawModalProps> = ({
@@ -34,6 +35,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
   onWeb3Success,
   onOpenEtherscan,
   onActivateSovereignMode,
+  onOpenQrisModal,
 }) => {
   const [activeTab, setActiveTab] = useState<'DANA_P2P' | 'WEB3_ETH'>('DANA_P2P');
   const [eggToWithdraw, setEggToWithdraw] = useState<number>(accumulatedEggs);
@@ -471,6 +473,23 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
                         node mitra peternakan tanpa perantara broker konvensional.
                       </div>
                     </div>
+
+                    {onOpenQrisModal && (
+                      <div className="pt-2 border-t border-slate-800 flex items-center justify-between flex-wrap gap-2">
+                        <span className="text-[11px] text-slate-400">Atau verifikasi / bayar langsung via Barcode Merchant:</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            sounds.playClick();
+                            onOpenQrisModal();
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-mono text-[10px] font-bold border border-rose-500/40 transition flex items-center gap-1.5"
+                        >
+                          <span>📲</span>
+                          <span>Buka Barcode QRIS Lumpia Ipul</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Total summary */}
