@@ -26,6 +26,7 @@ import { sounds } from './utils/soundEffects';
 import { calculateEmergencyDirective } from './utils/emergencyEngine';
 import { useMetaMask } from './hooks/useMetaMask';
 import { OWNER_METAMASK_ADDRESS } from './config/web3Config';
+import { OFFICIAL_BCA_CONFIG } from './config/bankConfig';
 
 import { SovereignIdentityHeader } from './components/SovereignIdentityHeader';
 import { EmergencyAlertBanner } from './components/EmergencyAlertBanner';
@@ -54,9 +55,12 @@ import { GlobalReadinessAuditModal } from './components/GlobalReadinessAuditModa
 import { PersonalFarmerDashboard } from './components/PersonalFarmerDashboard';
 import { FarmerAccountSwitcherModal } from './components/FarmerAccountSwitcherModal';
 import { SovereignMonetaryDirectiveModal } from './components/SovereignMonetaryDirectiveModal';
+import { AboutGamegrafityModal } from './components/AboutGamegrafityModal';
+import { AuthModal, AuthUser } from './components/AuthModal';
 import { SupportedLanguage, SupportedCurrency } from './utils/i18n';
 import { INITIAL_MARKET_PRICES } from './data/marketPriceData';
 import { ClimateMode, MarketPriceItem } from './types/farm';
+import { CreditCard, TrendingUp, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function App() {
@@ -233,6 +237,27 @@ export default function App() {
   const [activeFarmer, setActiveFarmer] = useState<FarmerAccount | null>(null);
   const [isOpenFarmerSwitcher, setIsOpenFarmerSwitcher] = useState<boolean>(false);
   const [isOpenMonetaryDirectiveModal, setIsOpenMonetaryDirectiveModal] = useState<boolean>(false);
+  const [isOpenAboutModal, setIsOpenAboutModal] = useState<boolean>(false);
+  
+  // Neon PostgreSQL farmers_users Auth State
+  const [isOpenAuthModal, setIsOpenAuthModal] = useState<boolean>(false);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('gamegrafity_auth_user');
+      return saved ? JSON.parse(saved) : {
+        id: 1,
+        google_email: 'uangnyagoparbanyak@gmail.com',
+        full_name: 'Mudhofar (Founder & Sovereign Owner)',
+        signup_date: new Date(Date.now() - 86400000 * 14).toISOString(),
+        last_sign_in: new Date().toISOString(),
+        last_sign_out: null,
+        avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        role: 'owner' as const
+      };
+    } catch {
+      return null;
+    }
+  });
 
   // Active Metaverse Coop & Infrastructure Rental State
   const [activeCoopRental, setActiveCoopRental] = useState<ActiveCoopRental | null>({
@@ -385,6 +410,37 @@ export default function App() {
     };
 
     setLedger((prev) => [newEntry, ...prev]);
+  };
+
+  // Auth Handler: Google & Manual Sign In/Up
+  const handleAuthSuccess = (user: AuthUser) => {
+    setAuthUser(user);
+    localStorage.setItem('gamegrafity_auth_user', JSON.stringify(user));
+    setUserProfile({
+      fullName: user.full_name,
+      role: user.role,
+      walletAddress: userProfile.walletAddress
+    });
+    addLedger(
+      'AUTENTIKASI GMAIL / GOOGLE BERHASIL',
+      `Pengguna '${user.full_name}' (${user.google_email}) berhasil autentikasi. Data sesi dicatat ke tabel Neon PostgreSQL farmers_users (last_sign_in diperbarui).`,
+      'SYSTEM',
+      true
+    );
+  };
+
+  // Auth Handler: Sign Out
+  const handleSignOut = () => {
+    if (authUser?.google_email) {
+      addLedger(
+        'SIGN OUT PENGGUNA',
+        `Sesi '${authUser.google_email}' telah berakhir. Kolom last_sign_out diperbarui ke waktu saat ini.`,
+        'SYSTEM',
+        true
+      );
+    }
+    setAuthUser(null);
+    localStorage.removeItem('gamegrafity_auth_user');
   };
 
   // Function to transition to Sovereign Mode and cleanse legacy name "Riska"
@@ -1950,6 +2006,10 @@ export default function App() {
         }}
         onOpenFarmerSwitcher={() => setIsOpenFarmerSwitcher(true)}
         onOpenMonetaryDirective={() => setIsOpenMonetaryDirectiveModal(true)}
+        onOpenAboutModal={() => setIsOpenAboutModal(true)}
+        onOpenAuthModal={() => setIsOpenAuthModal(true)}
+        authUser={authUser}
+        onSignOut={handleSignOut}
         farmerCountryFlag={farmerCountry.flag}
         farmerCountryName={farmerCountry.name}
         farmerFlockSize={farmerCountry.flockSize}
@@ -2081,21 +2141,151 @@ export default function App() {
         onOpenEtherscanByHash={handleOpenEtherscanByHash}
       />
 
-      {/* Footer Info & Verification Badges */}
-      <footer className="text-center py-6 text-xs text-slate-500 space-y-1 font-mono border-t border-slate-800/80">
-        <div className="flex flex-wrap items-center justify-center gap-4 text-slate-400">
-          <span>Gamegrafity Farm Sovereign Mode v2.5.0</span>
-          <span>•</span>
-          <span>Automated Emergency Triage</span>
-          <span>•</span>
-          <span>Real Biological Poultry Pipeline</span>
-          <span>•</span>
-          <span>Solidity 0.8.24</span>
-          <span>•</span>
-          <span>DANA P2P Escrow Verified</span>
+      {/* TENTANG GAMEGRAFITY FARM & LANGKAH MUDAH UNTUK UNTUNG */}
+      <section className="bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 border border-indigo-500/30 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-xl">🐔</span>
+              <h3 className="text-lg font-extrabold text-white">
+                Tentang Gamegrafity Farm
+              </h3>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold">
+                Anti-Defisit
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 max-w-3xl leading-relaxed">
+              <strong>Gamegrafity Farm</strong> adalah platform peternakan digital berbasis Web3 dan ekonomi Sovereign yang memastikan peternak pasti untung dan aman dari risiko kerugian, dengan sistem kas pusat yang otomatis melindungi dana agar tidak pernah kebobolan.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setIsOpenAboutModal(true)}
+            className="px-4 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 text-xs font-semibold flex items-center gap-1.5 transition shrink-0"
+          >
+            <span>Buka Panduan Lengkap</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
-        <p className="text-[11px] text-slate-600">
-          Protokol peternakan berdaulat bebas potongan broker perantara • Multi-chain Settlement
+
+        {/* Dual-Payout Hub & 4 Langkah Mudah Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-1">
+          {/* Card 1: Dual-Payout Hub */}
+          <div className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/60 space-y-3">
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-cyan-400" />
+              <span>Sistem Pembayaran (Dual-Payout Hub)</span>
+            </h4>
+            <div className="space-y-2 text-xs">
+              <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-700/50 flex items-start gap-2.5">
+                <span className="text-base shrink-0">📲</span>
+                <div>
+                  <strong className="text-white block text-[11px]">QRIS &amp; DANA P2P:</strong>
+                  <span className="text-slate-300 text-[11px]">Memungkinkan pencairan dana instan secara peer-to-peer langsung ke dompet digital DANA atau menggunakan pindai kode QR yang praktis.</span>
+                </div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-700/50 flex items-start gap-2.5">
+                <span className="text-base shrink-0">🏦</span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <strong className="text-white block text-[11px]">Rekening Bank Lokal (BCA, dll.):</strong>
+                    <span className="text-[9px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 px-1 py-0.2 rounded">
+                      Kas Pusat
+                    </span>
+                  </div>
+                  <span className="text-slate-300 text-[11px] block">Mendukung transfer langsung ke rekening bank lokal milik peternak untuk penarikan dana yang aman.</span>
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-950/60 border border-blue-800/60 text-[10px] font-mono text-blue-200">
+                    <span className="font-bold text-white">{OFFICIAL_BCA_CONFIG.bankName}:</span>
+                    <span className="tracking-wide text-cyan-300 font-bold">{OFFICIAL_BCA_CONFIG.accountNumber}</span>
+                    <span className="text-slate-300">a.n.</span>
+                    <span className="font-bold text-slate-100">{OFFICIAL_BCA_CONFIG.accountHolder}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-700/50 flex items-start gap-2.5">
+                <span className="text-base shrink-0">🦊</span>
+                <div>
+                  <strong className="text-white block text-[11px]">Web3 Wallet (MetaMask):</strong>
+                  <span className="text-slate-300 text-[11px]">Menyediakan opsi integrasi dompet kripto bagi pengguna yang bertransaksi dalam ekosistem desentralisasi.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: 4 Langkah Mudah untuk Untung */}
+          <div className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/60 space-y-3">
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-emerald-400" />
+              <span>Langkah Mudah untuk Untung</span>
+            </h4>
+            <div className="space-y-2 text-xs">
+              <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-700/50 flex items-start gap-2">
+                <span className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+                <div>
+                  <strong className="text-white text-[11px]">Aktivasi Siklus:</strong>
+                  <span className="text-slate-300 text-[11px] block">Memulai siklus pemeliharaan di sistem dengan dukungan utilitas dan pemantauan harga pasar secara real-time.</span>
+                </div>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-700/50 flex items-start gap-2">
+                <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                <div>
+                  <strong className="text-white text-[11px]">Bebas Risiko Kematian (Zero Mortality):</strong>
+                  <span className="text-slate-300 text-[11px] block">Terbebas dari risiko kerugian fisik akibat kematian ternak melalui sistem mitigasi dan efisiensi virtual yang melindungi peternak.</span>
+                </div>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-700/50 flex items-start gap-2">
+                <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-mono text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+                <div>
+                  <strong className="text-white text-[11px]">Harga Serap di Atas HPP:</strong>
+                  <span className="text-slate-300 text-[11px] block">Saat panen tiba, hasil dikunci pada harga serap yang berada di atas Harga Pokok Penjualan (HPP), sehingga margin keuntungan bersih langsung terbentuk.</span>
+                </div>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-700/50 flex items-start gap-2">
+                <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
+                <div>
+                  <strong className="text-white text-[11px]">Pencairan Instan:</strong>
+                  <span className="text-slate-300 text-[11px] block">Tarik keuntungan bersih Anda secara langsung ke DANA, rekening bank lokal, atau dompet digital kapan pun siklus selesai.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Kepemilikan & Hak Cipta Mudhofar's™ */}
+      <footer className="text-center py-8 text-xs text-slate-400 space-y-4 font-sans border-t border-slate-800/80 mt-10">
+        <div className="max-w-3xl mx-auto p-5 rounded-3xl bg-gradient-to-r from-slate-900/95 via-indigo-950/50 to-slate-900/95 border border-indigo-500/40 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="flex items-center justify-center gap-2 mb-2 text-indigo-400 font-mono text-[11px] font-bold uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+            <span>Kepemilikan &amp; Hak Cipta</span>
+          </div>
+
+          <h3 className="text-sm sm:text-base font-extrabold text-white tracking-tight">
+            © 2026 Gamegrafity Farm. Created &amp; Owned by Mudhofar's™. All rights reserved.
+          </h3>
+
+          <p className="text-xs text-slate-300 mt-2 leading-relaxed max-w-2xl mx-auto">
+            <strong className="text-indigo-300">Sovereign Mode™</strong>, <strong className="text-cyan-300">Web3 Agro-Fi™</strong>, dan <strong className="text-emerald-300">Dual-Payout Hub™</strong> adalah merek dan kekayaan intelektual digital terdaftar dari ekosistem <strong className="text-purple-300">Mudhofar's™</strong>.
+          </p>
+
+          <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-center gap-3 text-[11px] font-mono text-slate-400">
+            <span className="px-2.5 py-0.5 rounded-full bg-slate-800/80 border border-slate-700">
+              Genesis Origin: Blitar, Indonesia
+            </span>
+            <span>•</span>
+            <span className="px-2.5 py-0.5 rounded-full bg-slate-800/80 border border-slate-700">
+              Protokol Peternakan Berdaulat Tanpa Broker
+            </span>
+            <span>•</span>
+            <span className="px-2.5 py-0.5 rounded-full bg-slate-800/80 border border-slate-700">
+              Multi-Chain &amp; DANA P2P Settlement
+            </span>
+          </div>
+        </div>
+
+        <p className="text-[11px] text-slate-500 font-mono">
+          Gamegrafity Farm Sovereign Mode v2.5.0 • Verified Smart Contract &amp; Direct Owner Treasury Routing
         </p>
       </footer>
     </div>
@@ -2313,6 +2503,27 @@ export default function App() {
         onClose={() => setIsOpenMonetaryDirectiveModal(false)}
         activeFarmerId={activeFarmerId}
         onRefreshParent={fetchActiveFarmer}
+      />
+
+      {/* Tentang Gamegrafity Farm, Dual-Payout Hub & Panduan Untung Modal */}
+      <AboutGamegrafityModal
+        isOpen={isOpenAboutModal}
+        onClose={() => setIsOpenAboutModal(false)}
+        onOpenQrisModal={() => setIsOpenQrisModal(true)}
+        onOpenPersonalDashboard={() => {
+          const el = document.getElementById('personal-farmer-dashboard-section');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onOpenTopUp={() => setIsOpenTopUp(true)}
+      />
+
+      {/* Autentikasi Gmail / Google, Manual Form & Neon PostgreSQL farmers_users Modal */}
+      <AuthModal
+        isOpen={isOpenAuthModal}
+        onClose={() => setIsOpenAuthModal(false)}
+        currentUser={authUser}
+        onAuthSuccess={handleAuthSuccess}
+        onSignOut={handleSignOut}
       />
     </div>
   );

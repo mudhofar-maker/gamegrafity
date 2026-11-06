@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { X, ArrowDownRight, Wallet, ShieldCheck, CheckCircle2, ExternalLink, Sparkles, AlertCircle, RefreshCw, Scale } from 'lucide-react';
+import { X, ArrowDownRight, Wallet, ShieldCheck, CheckCircle2, ExternalLink, Sparkles, AlertCircle, RefreshCw, Scale, Building, Copy, Check } from 'lucide-react';
 import { formatRupiah, formatEth, shortenAddress } from '../utils/formatters';
 import { sounds } from '../utils/soundEffects';
 import { IDR_PER_EGG, IDR_PER_ETH, eggCountToEth, executeWeb3HarvestTransaction } from '../services/web3Service';
 import { Web3TransactionReceipt, P2PReceipt, FarmerIdentity, EggGrade } from '../types/farm';
 import { calculateEggGramasi, EGG_GRADE_SPECS } from '../utils/gramasiEngine';
+import { OFFICIAL_BCA_CONFIG } from '../config/bankConfig';
 import { ethers } from 'ethers';
 import confetti from 'canvas-confetti';
 
@@ -43,7 +44,12 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
   const [withdrawSource, setWithdrawSource] = useState<'EGGS' | 'WALLET_IDR'>('EGGS');
   const [walletAmountIdr, setWalletAmountIdr] = useState<number>(saldoDompetSaya);
 
-  // DANA P2P Form States
+  // DANA P2P & Bank Local Form States
+  const [fiatChannel, setFiatChannel] = useState<'DANA' | 'BANK'>('DANA');
+  const [selectedBank, setSelectedBank] = useState<string>('BCA');
+  const [bankAccountNumber, setBankAccountNumber] = useState<string>('');
+  const [bankAccountHolder, setBankAccountHolder] = useState<string>(farmer.name || 'Peternak Gamegrafity');
+  const [copiedTreasuryBca, setCopiedTreasuryBca] = useState<boolean>(false);
   const [danaNumber, setDanaNumber] = useState<string>('0813-8920-1123');
   const [accountName, setAccountName] = useState<string>('Sovereign Agro Farmer');
   const [p2pStep, setP2pStep] = useState<'IDLE' | 'MATCHING_ESCROW' | 'TRANSFERRING' | 'SUCCESS'>('IDLE');
@@ -63,7 +69,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
 
   const effectiveIdrPayout = withdrawSource === 'EGGS' ? calculatedIdrFromEggs : walletAmountIdr;
 
-  // Handle DANA P2P Payout
+  // Handle DANA P2P or Local Bank Payout
   const handleExecuteP2P = async () => {
     if (withdrawSource === 'EGGS' && (eggToWithdraw <= 0 || eggToWithdraw > accumulatedEggs)) {
       sounds.playError();
@@ -75,10 +81,24 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
       alert('Saldo dompet tidak mencukupi untuk penarikan!');
       return;
     }
-    if (!danaNumber || danaNumber.length < 8) {
-      sounds.playError();
-      alert('Masukkan nomor akun DANA yang valid!');
-      return;
+
+    if (fiatChannel === 'DANA') {
+      if (!danaNumber || danaNumber.length < 8) {
+        sounds.playError();
+        alert('Masukkan nomor akun DANA yang valid!');
+        return;
+      }
+    } else {
+      if (!bankAccountNumber || bankAccountNumber.trim().length < 5) {
+        sounds.playError();
+        alert('Masukkan nomor rekening bank tujuan yang valid!');
+        return;
+      }
+      if (!bankAccountHolder || !bankAccountHolder.trim()) {
+        sounds.playError();
+        alert('Masukkan nama pemilik rekening bank tujuan!');
+        return;
+      }
     }
 
     sounds.playClick();
@@ -87,15 +107,16 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
     setTimeout(() => {
       setP2pStep('TRANSFERRING');
       setTimeout(() => {
+        const isBank = fiatChannel === 'BANK';
         const receipt: P2PReceipt = {
-          txId: 'DANA-P2P-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
-          refId: 'DANAREF' + Math.floor(1000000000 + Math.random() * 9000000000),
-          danaNumber,
-          accountName,
+          txId: (isBank ? `${selectedBank}-` : 'DANA-P2P-') + Math.random().toString(36).substring(2, 8).toUpperCase(),
+          refId: (isBank ? 'BCAREF' : 'DANAREF') + Math.floor(1000000000 + Math.random() * 9000000000),
+          danaNumber: isBank ? `${selectedBank} ${bankAccountNumber}` : danaNumber,
+          accountName: isBank ? bankAccountHolder : accountName,
           amountIdr: effectiveIdrPayout,
           eggCount: withdrawSource === 'EGGS' ? eggToWithdraw : 0,
           timestamp: new Date().toLocaleTimeString('id-ID'),
-          escrowMerchant: 'PT Agro Liquidity Peer Node (Verified)',
+          escrowMerchant: `Treasury Clearing Node (${OFFICIAL_BCA_CONFIG.bankName} No. ${OFFICIAL_BCA_CONFIG.accountNumber} a.n. ${OFFICIAL_BCA_CONFIG.accountHolder})`,
           status: 'COMPLETED',
           feeIdr: 0,
         };
@@ -214,7 +235,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
-            1. P2P Aplikasi DANA (IDR Fiat)
+            1. P2P DANA &amp; Rekening Bank (IDR Fiat)
           </button>
 
           <button
@@ -247,9 +268,9 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
                     <CheckCircle2 className="w-7 h-7" />
                   </div>
                   <div>
-                    <h4 className="text-base font-bold text-white">Penarikan P2P DANA Berhasil!</h4>
+                    <h4 className="text-base font-bold text-white">Penarikan Fiat Berhasil!</h4>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      Dana instan telah ditransfer ke akun DANA tanpa potongan broker.
+                      Dana instan telah diproses oleh Treasury Node tanpa potongan broker.
                     </p>
                   </div>
 
@@ -259,8 +280,8 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
                       <span className="text-emerald-400 font-bold">{formatRupiah(latestP2pReceipt.amountIdr)}</span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-slate-800">
-                      <span className="text-slate-400">Nomor DANA:</span>
-                      <span className="text-slate-200">{latestP2pReceipt.danaNumber}</span>
+                      <span className="text-slate-400">Tujuan Pencairan:</span>
+                      <span className="text-slate-200 font-bold">{latestP2pReceipt.danaNumber}</span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-slate-800">
                       <span className="text-slate-400">Nama Penerima:</span>
@@ -270,9 +291,9 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
                       <span className="text-slate-400">ID Referensi:</span>
                       <span className="text-slate-300">{latestP2pReceipt.refId}</span>
                     </div>
-                    <div className="flex justify-between py-1 border-b border-slate-800">
-                      <span className="text-slate-400">Escrow Provider:</span>
-                      <span className="text-sky-400">{latestP2pReceipt.escrowMerchant}</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between py-1 border-b border-slate-800 gap-1">
+                      <span className="text-slate-400 shrink-0">Kas Pengirim (Treasury):</span>
+                      <span className="text-sky-300 text-left sm:text-right text-[11px]">{latestP2pReceipt.escrowMerchant}</span>
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="text-slate-400">Biaya Broker:</span>
@@ -436,47 +457,153 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
                     </div>
                   )}
 
-                  {/* DANA Destination details */}
+                  {/* Fiat Payout Destination Details */}
                   <div className="space-y-3 bg-slate-950 p-4 rounded-xl border border-slate-800">
-                    <div className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                      <Wallet className="w-4 h-4 text-sky-400" />
-                      Tujuan Penarikan DANA P2P
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[11px] text-slate-400 mb-1">Nomor Ponsel DANA</label>
-                        <input
-                          type="text"
-                          value={danaNumber}
-                          onChange={(e) => setDanaNumber(e.target.value)}
-                          placeholder="Contoh: 081234567890"
-                          className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-sky-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] text-slate-400 mb-1">Nama Pemilik Akun DANA</label>
-                        <input
-                          type="text"
-                          value={accountName}
-                          onChange={(e) => setAccountName(e.target.value)}
-                          placeholder="Nama tertera di akun DANA"
-                          className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
-                        />
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <Wallet className="w-4 h-4 text-sky-400" />
+                        Pilih Saluran Pencairan Fiat (Dual-Payout Hub)
                       </div>
                     </div>
 
-                    <div className="p-2.5 rounded-lg bg-sky-950/40 border border-sky-900/50 flex items-start gap-2 text-[11px] text-sky-300">
-                      <ShieldCheck className="w-4 h-4 shrink-0 text-sky-400 mt-0.5" />
-                      <div>
-                        <strong>Escrow Otomatis Peer-to-Peer:</strong> Dana ditransfer langsung oleh liquidity
-                        node mitra peternakan tanpa perantara broker konvensional.
+                    {/* Channel selector */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFiatChannel('DANA');
+                          sounds.playClick();
+                        }}
+                        className={`py-2 px-3 rounded-lg text-xs font-bold border transition flex items-center justify-center gap-2 ${
+                          fiatChannel === 'DANA'
+                            ? 'bg-sky-600/25 border-sky-500 text-sky-300'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        <span>📲</span>
+                        <span>DANA P2P</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFiatChannel('BANK');
+                          sounds.playClick();
+                        }}
+                        className={`py-2 px-3 rounded-lg text-xs font-bold border transition flex items-center justify-center gap-2 ${
+                          fiatChannel === 'BANK'
+                            ? 'bg-blue-600/25 border-blue-500 text-blue-300'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        <Building className="w-3.5 h-3.5" />
+                        <span>Transfer Bank Lokal</span>
+                      </button>
+                    </div>
+
+                    {fiatChannel === 'DANA' ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div>
+                          <label className="block text-[11px] text-slate-400 mb-1">Nomor Ponsel DANA</label>
+                          <input
+                            type="text"
+                            value={danaNumber}
+                            onChange={(e) => setDanaNumber(e.target.value)}
+                            placeholder="Contoh: 081234567890"
+                            className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-slate-400 mb-1">Nama Pemilik Akun DANA</label>
+                          <input
+                            type="text"
+                            value={accountName}
+                            onChange={(e) => setAccountName(e.target.value)}
+                            placeholder="Nama tertera di akun DANA"
+                            className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
                       </div>
+                    ) : (
+                      <div className="space-y-2.5 pt-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-1">Bank Tujuan</label>
+                            <select
+                              value={selectedBank}
+                              onChange={(e) => setSelectedBank(e.target.value)}
+                              className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
+                            >
+                              <option value="BCA">BCA</option>
+                              <option value="Mandiri">Bank Mandiri</option>
+                              <option value="BRI">Bank BRI</option>
+                              <option value="BNI">Bank BNI</option>
+                              <option value="CIMB">CIMB Niaga</option>
+                              <option value="Permata">Bank Permata</option>
+                              <option value="Bank Lain">Bank Lainnya</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-1">Nomor Rekening Tujuan</label>
+                            <input
+                              type="text"
+                              value={bankAccountNumber}
+                              onChange={(e) => setBankAccountNumber(e.target.value)}
+                              placeholder="Contoh: 1234567890"
+                              className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-blue-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-1">Nama Pemilik Rekening</label>
+                            <input
+                              type="text"
+                              value={bankAccountHolder}
+                              onChange={(e) => setBankAccountHolder(e.target.value)}
+                              placeholder="Nama terdaftar di buku tabungan"
+                              className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Official Treasury Clearing Node Info */}
+                    <div className="p-3 rounded-xl bg-blue-950/30 border border-blue-800/40 space-y-1.5 text-xs">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-blue-300 font-bold text-[11px]">
+                          <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+                          <span>Pusat Kliring Kas Resmi Gamegrafity:</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                          100% Terjamin
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-300 font-mono text-[11px] pt-0.5">
+                        <span>
+                          {OFFICIAL_BCA_CONFIG.bankName} - <strong className="text-white">{OFFICIAL_BCA_CONFIG.accountNumber}</strong> a.n. <strong className="text-cyan-300">{OFFICIAL_BCA_CONFIG.accountHolder}</strong>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            sounds.playClick();
+                            navigator.clipboard.writeText(OFFICIAL_BCA_CONFIG.accountNumber);
+                            setCopiedTreasuryBca(true);
+                            setTimeout(() => setCopiedTreasuryBca(false), 2000);
+                          }}
+                          className="px-2 py-0.5 rounded bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 text-[10px] flex items-center gap-1 border border-blue-500/40 transition shrink-0 ml-2"
+                        >
+                          {copiedTreasuryBca ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedTreasuryBca ? 'Tersalin' : 'Salin'}</span>
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-400 leading-normal">
+                        Dana dicairkan langsung dari rekening kas operasional resmi tanpa perantara broker konvensional.
+                      </p>
                     </div>
 
                     {onOpenQrisModal && (
                       <div className="pt-2 border-t border-slate-800 flex items-center justify-between flex-wrap gap-2">
-                        <span className="text-[11px] text-slate-400">Atau verifikasi / bayar langsung via Barcode Merchant:</span>
+                        <span className="text-[11px] text-slate-400">Atau verifikasi pembayaran via Merchant QRIS:</span>
                         <button
                           type="button"
                           onClick={() => {

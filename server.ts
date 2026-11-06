@@ -3,6 +3,7 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import { authDb } from './src/server/authDb';
 
 dotenv.config();
 
@@ -170,6 +171,103 @@ async function startServer() {
       activeContract: '0x89D24A6b4CcB1B6fAA2625fE562bDD9a23260359',
       registeredFarmersCount: registeredFarmers.length
     });
+  });
+
+  // ======================== AUTH & FARMERS_USERS NEON POSTGRESQL APIs ========================
+  // API: Get database connection status and all registered users in farmers_users
+  app.get('/api/auth/status', async (_req, res) => {
+    const status = authDb.getDatabaseStatus();
+    const users = await authDb.getAllUsers();
+    res.json({
+      success: true,
+      status,
+      totalUsers: users.length,
+      users
+    });
+  });
+
+  // API: Sign Up / Sign In with Google (Gmail)
+  app.post('/api/auth/google', async (req, res) => {
+    const { google_email, full_name, avatar_url } = req.body;
+    if (!google_email) {
+      return res.status(400).json({ success: false, message: 'Google Email (Gmail) wajib diisi.' });
+    }
+
+    try {
+      const user = await authDb.handleGoogleAuth(
+        google_email,
+        full_name || google_email.split('@')[0],
+        avatar_url
+      );
+      console.log(`[Auth API] Google / Gmail Sign In: ${user.google_email} (${user.full_name}) - Last Sign In updated`);
+      res.json({
+        success: true,
+        message: `Autentikasi Google berhasil! Pengguna terdaftar di tabel farmers_users (last_sign_in diperbarui).`,
+        user
+      });
+    } catch (err: any) {
+      console.error('[Auth API] Google Auth error:', err);
+      res.status(500).json({ success: false, message: err?.message || 'Gagal memproses autentikasi Google.' });
+    }
+  });
+
+  // API: Manual Sign In (Email & Password)
+  app.post('/api/auth/signin', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Alamat Email wajib diisi.' });
+    }
+
+    try {
+      const result = await authDb.handleManualSignIn(email, password);
+      console.log(`[Auth API] Manual Sign In: ${email} - Last Sign In updated`);
+      res.json({
+        success: true,
+        message: 'Sign In berhasil! Waktu login dicatat ke kolom last_sign_in.',
+        user: result.user
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err?.message || 'Gagal Sign In.' });
+    }
+  });
+
+  // API: Manual Sign Up (New User Registration)
+  app.post('/api/auth/signup', async (req, res) => {
+    const { email, full_name, password } = req.body;
+    if (!email || !full_name) {
+      return res.status(400).json({ success: false, message: 'Email dan Nama Lengkap wajib diisi.' });
+    }
+
+    try {
+      const result = await authDb.handleManualSignUp(email, full_name, password);
+      console.log(`[Auth API] Manual Sign Up: ${email} (${full_name}) - Data disimpan ke farmers_users`);
+      res.json({
+        success: true,
+        message: 'Pendaftaran berhasil! Akun baru tersimpan di tabel farmers_users dengan tanggal pendaftaran signup_date.',
+        user: result.user
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err?.message || 'Gagal mendaftar.' });
+    }
+  });
+
+  // API: Sign Out (Updates last_sign_out column)
+  app.post('/api/auth/signout', async (req, res) => {
+    const { email } = req.body;
+    if (email) {
+      await authDb.handleSignOut(email);
+      console.log(`[Auth API] User Sign Out: ${email} - Last Sign Out updated in farmers_users`);
+    }
+    res.json({
+      success: true,
+      message: 'Sesi berakhir. Kolom last_sign_out telah diperbarui dengan waktu saat ini.'
+    });
+  });
+
+  // API: Get All Users in farmers_users
+  app.get('/api/auth/users', async (_req, res) => {
+    const users = await authDb.getAllUsers();
+    res.json({ success: true, count: users.length, users });
   });
 
   // API: Get all registered global farmers

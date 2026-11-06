@@ -24,6 +24,7 @@ import { formatRupiah, formatEth } from '../utils/formatters';
 import { sounds } from '../utils/soundEffects';
 import confetti from 'canvas-confetti';
 import { OwnerCashoutDestination, OwnerRealWorldWithdrawal } from '../types/farm';
+import { OFFICIAL_BCA_CONFIG } from '../config/bankConfig';
 
 interface OwnerTreasurySettlementModalProps {
   isOpen: boolean;
@@ -61,9 +62,9 @@ export const OwnerTreasurySettlementModal: React.FC<OwnerTreasurySettlementModal
   }[] = [
     {
       id: 'BCA_CORPORATE',
-      name: 'Bank BCA Corporate Settlement',
-      sub: 'Rekening Giro Korporat PT Gamegrafity Agro Sovereign',
-      account: '8801-9283-7465-201',
+      name: `Bank ${OFFICIAL_BCA_CONFIG.bankName}`,
+      sub: `Pusat Pencairan Dana & Pengelolaan Kas Operasional Aman (${OFFICIAL_BCA_CONFIG.accountHolder})`,
+      account: `${OFFICIAL_BCA_CONFIG.accountNumber} a.n. ${OFFICIAL_BCA_CONFIG.accountHolder}`,
       icon: Building,
       color: 'text-blue-400 border-blue-500/40 bg-blue-950/30'
     },

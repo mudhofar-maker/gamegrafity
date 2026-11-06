@@ -18,6 +18,7 @@ import { formatRupiah } from '../utils/formatters';
 import { sounds } from '../utils/soundEffects';
 import confetti from 'canvas-confetti';
 import { SupportedPaymentChannel } from '../types/farm';
+import { OFFICIAL_BCA_CONFIG } from '../config/bankConfig';
 
 interface TopUpModalProps {
   isOpen: boolean;
@@ -270,11 +271,11 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
           <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col items-center text-center">
             <div className="flex items-center justify-between w-full mb-3 px-1">
               <span className="text-[11px] font-mono text-slate-400">
-                {paymentMethod === 'BCA' && 'Virtual Account BCA: '}
+                {paymentMethod === 'BCA' && 'Rekening BCA: '}
                 {paymentMethod === 'WEB3_WALLET' && 'Smart Contract Treasury: '}
                 {(paymentMethod === 'QRIS' || paymentMethod === 'DANA') && 'NMID (LUMPIA IPUL): '}
                 <strong className="text-slate-200">
-                  {paymentMethod === 'BCA' ? '880192837465201' : paymentMethod === 'WEB3_WALLET' ? '0x89D2...0359' : 'ID1026601649688'}
+                  {paymentMethod === 'BCA' ? OFFICIAL_BCA_CONFIG.accountNumber : paymentMethod === 'WEB3_WALLET' ? '0x89D2...0359' : 'ID1026601649688'}
                 </strong>
               </span>
               <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
@@ -332,25 +333,29 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
             )}
 
             {paymentMethod === 'BCA' && (
-              <div className="w-full p-4 bg-blue-950/40 rounded-xl border border-blue-500/30 text-left space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Nomor Virtual Account BCA:</span>
-                  <span className="font-mono text-blue-300 font-bold text-sm">88019 2837 4652 01</span>
+              <div className="w-full p-4 bg-blue-950/40 rounded-xl border border-blue-500/30 text-left space-y-2.5">
+                <div className="flex items-center justify-between text-xs pb-1.5 border-b border-blue-500/20">
+                  <span className="text-slate-400">Nama Bank:</span>
+                  <span className="font-mono text-cyan-300 font-bold">{OFFICIAL_BCA_CONFIG.bankName}</span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Nama Rekening:</span>
-                  <span className="font-mono text-white font-bold">GAMEGRAFITY FARM SOVEREIGN</span>
+                <div className="flex items-center justify-between text-xs pb-1.5 border-b border-blue-500/20">
+                  <span className="text-slate-400">Nomor Rekening:</span>
+                  <span className="font-mono text-blue-300 font-bold text-base tracking-wider">{OFFICIAL_BCA_CONFIG.accountNumber}</span>
                 </div>
-                <div className="text-[11px] text-slate-400">
-                  Pembayaran diverifikasi secara otomatis dalam 5-10 detik tanpa perlu kirim bukti transfer.
+                <div className="flex items-center justify-between text-xs pb-1.5 border-b border-blue-500/20">
+                  <span className="text-slate-400">Atas Nama:</span>
+                  <span className="font-mono text-white font-bold">{OFFICIAL_BCA_CONFIG.accountHolder}</span>
+                </div>
+                <div className="text-[11px] text-blue-200/90 leading-relaxed bg-blue-900/30 p-2.5 rounded-lg border border-blue-500/20">
+                  {OFFICIAL_BCA_CONFIG.description}
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleCopy('880192837465201')}
-                  className="w-full py-1.5 rounded-lg bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition border border-blue-500/40"
+                  onClick={() => handleCopy(OFFICIAL_BCA_CONFIG.accountNumber)}
+                  className="w-full py-2 rounded-lg bg-blue-600/40 hover:bg-blue-600/60 text-blue-100 text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition border border-blue-500/50 shadow-sm"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  Salin Nomor BCA VA
+                  Salin Nomor Rekening BCA (3432650071)
                 </button>
               </div>
             )}

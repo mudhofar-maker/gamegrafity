@@ -323,6 +323,16 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               </>
             )}
           </button>
+
+          {/* Kepemilikan & Hak Cipta Mudhofar's™ */}
+          <div className="pt-3 border-t border-slate-800/80 text-center space-y-1">
+            <p className="text-[11px] font-bold text-slate-300">
+              © 2026 Gamegrafity Farm. Created &amp; Owned by Mudhofar's™. All rights reserved.
+            </p>
+            <p className="text-[10px] text-slate-400">
+              Sovereign Mode™, Web3 Agro-Fi™, dan Dual-Payout Hub™ adalah merek dan kekayaan intelektual digital terdaftar dari ekosistem Mudhofar's™.
+            </p>
+          </div>
         </form>
       </div>
     </div>
