@@ -104,15 +104,18 @@ export const OwnerTreasurySettlementModal: React.FC<OwnerTreasurySettlementModal
 
   const currentDest = destinations.find((d) => d.id === selectedDestination) || destinations[0];
 
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const handleExecuteCashout = () => {
+    setErrorMsg(null);
     if (activeAmount <= 0) {
       sounds.playError();
-      alert('Masukkan nominal pencairan kas yang valid.');
+      setErrorMsg('Masukkan nominal pencairan kas yang valid.');
       return;
     }
     if (activeAmount > kasTreasuryOwner) {
       sounds.playError();
-      alert(`Nominal penarikan (${formatRupiah(activeAmount)}) melebihi saldo Kas Treasury Owner (${formatRupiah(kasTreasuryOwner)}).`);
+      setErrorMsg(`Nominal penarikan (${formatRupiah(activeAmount)}) melebihi saldo Kas Treasury Owner (${formatRupiah(kasTreasuryOwner)}).`);
       return;
     }
 

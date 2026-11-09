@@ -69,34 +69,37 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
 
   const effectiveIdrPayout = withdrawSource === 'EGGS' ? calculatedIdrFromEggs : walletAmountIdr;
 
+  const [formError, setFormError] = useState<string | null>(null);
+
   // Handle DANA P2P or Local Bank Payout
   const handleExecuteP2P = async () => {
+    setFormError(null);
     if (withdrawSource === 'EGGS' && (eggToWithdraw <= 0 || eggToWithdraw > accumulatedEggs)) {
       sounds.playError();
-      alert('Jumlah telur yang ditarik tidak valid!');
+      setFormError('Jumlah telur yang ditarik tidak valid!');
       return;
     }
     if (withdrawSource === 'WALLET_IDR' && (walletAmountIdr <= 0 || walletAmountIdr > saldoDompetSaya)) {
       sounds.playError();
-      alert('Saldo dompet tidak mencukupi untuk penarikan!');
+      setFormError('Saldo dompet tidak mencukupi untuk penarikan!');
       return;
     }
 
     if (fiatChannel === 'DANA') {
       if (!danaNumber || danaNumber.length < 8) {
         sounds.playError();
-        alert('Masukkan nomor akun DANA yang valid!');
+        setFormError('Masukkan nomor akun DANA yang valid!');
         return;
       }
     } else {
       if (!bankAccountNumber || bankAccountNumber.trim().length < 5) {
         sounds.playError();
-        alert('Masukkan nomor rekening bank tujuan yang valid!');
+        setFormError('Masukkan nomor rekening bank tujuan yang valid!');
         return;
       }
       if (!bankAccountHolder || !bankAccountHolder.trim()) {
         sounds.playError();
-        alert('Masukkan nama pemilik rekening bank tujuan!');
+        setFormError('Masukkan nama pemilik rekening bank tujuan!');
         return;
       }
     }
@@ -141,9 +144,10 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
 
   // Handle Web3 ETH Smart Contract Payout
   const handleExecuteWeb3 = async () => {
+    setFormError(null);
     if (eggToWithdraw <= 0 || eggToWithdraw > accumulatedEggs) {
       sounds.playError();
-      alert('Jumlah telur yang ditarik ke Web3 tidak valid!');
+      setFormError('Jumlah telur yang ditarik ke Web3 tidak valid!');
       return;
     }
 
@@ -258,6 +262,22 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
 
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-5">
+          {formError && (
+            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{formError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormError(null)}
+                className="text-rose-400 hover:text-white text-xs px-2 py-0.5 rounded"
+              >
+                Tutup
+              </button>
+            </div>
+          )}
+
           {/* ===================== TAB 1: P2P DANA ===================== */}
           {activeTab === 'DANA_P2P' && (
             <div className="space-y-4">

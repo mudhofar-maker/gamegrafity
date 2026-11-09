@@ -485,22 +485,43 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
                     </div>
 
                     {/* Price & Monthly Rent Tag */}
-                    <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800/80">
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-2xl font-black font-mono text-amber-300">
-                          {formatRupiah(pkg.totalMonthlyRentIdr)}
-                        </span>
-                        <span className="text-xs font-mono text-slate-400">/ Bulan</span>
-                      </div>
-                      {/* Breakdown Lahan + Kandang */}
-                      <div className="mt-2 pt-2 border-t border-slate-800 text-[11px] font-mono text-slate-300 space-y-1">
-                        <div className="flex justify-between text-slate-400">
-                          <span>• Sewa Lahan Berdaulat:</span>
-                          <span className="text-slate-200 font-bold">{formatRupiah(pkg.breakdown.landCostIdr)}</span>
+                    <div className="p-3.5 bg-slate-950/80 rounded-xl border border-slate-800/80 space-y-2">
+                      {pkg.entryPackagePriceIdr && (
+                        <div>
+                          <span className="text-[10px] font-mono font-bold uppercase text-amber-400 block">
+                            Modal Masuk Paket Kemitraan All-In:
+                          </span>
+                          <div className="flex items-baseline justify-between">
+                            <span className="text-2xl font-black font-mono text-amber-300">
+                              {formatRupiah(pkg.entryPackagePriceIdr)}
+                            </span>
+                            <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                              Siap Produksi
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 block mt-0.5">
+                            Termasuk 100% bibit pullet 18 minggu, sewa kandang, vitamin, &amp; SOP steril pasca-afkir.
+                          </span>
                         </div>
-                        <div className="flex justify-between text-slate-400">
-                          <span>• Sewa Bangunan Kandang:</span>
-                          <span className="text-slate-200 font-bold">{formatRupiah(pkg.breakdown.coopCostIdr)}</span>
+                      )}
+
+                      <div className="pt-2 border-t border-slate-800/80">
+                        <div className="flex items-baseline justify-between">
+                          <span className="text-[11px] text-slate-400">Sewa Utility Berjalan:</span>
+                          <span className="text-sm font-bold font-mono text-slate-200">
+                            {formatRupiah(pkg.totalMonthlyRentIdr)} <span className="text-[10px] text-slate-400 font-normal">/ bln</span>
+                          </span>
+                        </div>
+                        {/* Breakdown Lahan + Kandang */}
+                        <div className="mt-1 pt-1 border-t border-slate-900 text-[10px] font-mono text-slate-400 space-y-0.5">
+                          <div className="flex justify-between">
+                            <span>• Sewa Lahan Berdaulat:</span>
+                            <span className="text-slate-300">{formatRupiah(pkg.breakdown.landCostIdr)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>• Sewa Utility Kandang:</span>
+                            <span className="text-slate-300">{formatRupiah(pkg.breakdown.coopCostIdr)}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -509,7 +530,7 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
                     <div className="flex items-center gap-2 p-2 bg-emerald-950/30 rounded-lg border border-emerald-500/20 text-xs">
                       <Award className="w-4 h-4 text-emerald-400 shrink-0" />
                       <span className="text-slate-300">
-                        Kapasitas Populasi: <strong className="text-emerald-300 font-mono text-sm">{pkg.capacityBirds.toLocaleString()}</strong> Ekor Ayam
+                        Kapasitas Populasi: <strong className="text-emerald-300 font-mono text-sm">{pkg.capacityBirds.toLocaleString()}</strong> Ekor Pullet (Otomatis)
                       </span>
                     </div>
 
@@ -537,13 +558,13 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
                     {/* Projected Net Profit Monthly Banner */}
                     <div className="p-3 bg-gradient-to-r from-emerald-950/40 via-slate-950 to-emerald-950/40 rounded-xl border border-emerald-500/30">
                       <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                        Estimasi Net Profit Bulanan Peternak:
+                        Estimasi Net Profit Bulanan Peternak (Acuan Broker Rp 21.500/Kg):
                       </span>
                       <div className="text-sm font-extrabold font-mono text-emerald-400 mt-0.5">
                         {pkg.projectedNetProfitMonthly.displayRange}
                       </div>
                       <span className="text-[10px] text-slate-400 block mt-1">
-                        Est. Telur: ~{pkg.projectedNetProfitMonthly.dailyEggs} butir/hari ({Math.round(pkg.capacityBirds * 0.88 * 30)} butir/bln)
+                        Est. Panen: ~{pkg.projectedNetProfitMonthly.dailyEggs} butir/hari ({Math.round(pkg.capacityBirds * 0.85 * 30)} butir/bln)
                       </span>
                     </div>
                   </div>
@@ -564,17 +585,17 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
                       {isActive ? (
                         <>
                           <RotateCcw className="w-4 h-4" />
-                          <span>Perpanjang Paket ({formatRupiah(pkg.totalMonthlyRentIdr)})</span>
+                          <span>Paket Aktif Berproduksi (Perpanjang {formatRupiah(pkg.totalMonthlyRentIdr)})</span>
                         </>
                       ) : isAffordable ? (
                         <>
                           <Zap className="w-4 h-4 text-emerald-200" />
-                          <span>Pilih & Aktifkan Paket</span>
+                          <span>Order &amp; Mulai Produksi Otomatis</span>
                         </>
                       ) : (
                         <>
                           <Zap className="w-4 h-4 text-amber-400" />
-                          <span>Pilih & Aktifkan Paket (Bayar QRIS / DANA / BCA)</span>
+                          <span>Order Paket (Bayar QRIS / DANA / BCA)</span>
                         </>
                       )}
                     </button>
@@ -819,13 +840,84 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
       {/* 4. TAB CONTENT: TABEL PILIHAN KANDANG SATUAN */}
       {activeTab === 'table' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs text-slate-400 px-1">
-            <span className="font-semibold text-slate-300">
-              Katalog Sewa Satuan: Kandang Standar, Kandang Bertingkat IoT, Cyber-Coop & Plot Lahan
-            </span>
-            <span className="text-emerald-400 font-mono text-[11px]">
-              ✓ Bebas broker • Potong saldo otomatis ke Kas Owner
-            </span>
+          {/* Official 4-Scale Construction Benchmark Card */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/70 border border-slate-700/80 shadow-xl space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <DollarSign className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    Patokan Harga Kandang: Biaya Konstruksi Fisik vs Sewa Utility Bulanan
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      Standar Pinsar & Industri RI
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-slate-400">
+                    Sistem sewa utility mengeliminasi 100% biaya modal konstruksi (Capex) di awal bagi peternak
+                  </p>
+                </div>
+              </div>
+              <span className="text-[11px] font-mono text-emerald-400">
+                ✓ Potong saldo otomatis ke Kas Owner
+              </span>
+            </div>
+
+            {/* 4 Scales Comparison Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-white">Skala Kecil</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300">50 Ekor</span>
+                </div>
+                <div className="text-[10px] text-slate-400">
+                  Konstruksi: <strong className="text-amber-300 font-mono">Rp 1.5M – Rp 3M</strong>
+                </div>
+                <div className="text-[11px] font-mono font-bold text-emerald-400">
+                  Sewa: Rp 250.000 / bln
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-white">Kapasitas Menengah</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300">100 Ekor</span>
+                </div>
+                <div className="text-[10px] text-slate-400">
+                  Konstruksi: <strong className="text-amber-300 font-mono">Rp 3.5M – Rp 6.5M</strong>
+                </div>
+                <div className="text-[11px] font-mono font-bold text-emerald-400">
+                  Sewa: Rp 550.000 / bln
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1 ring-1 ring-cyan-500/40">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-white">Skala Komersial</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300">500 Ekor</span>
+                </div>
+                <div className="text-[10px] text-slate-400">
+                  Konstruksi: <strong className="text-amber-300 font-mono">Rp 15M – Rp 25M</strong>
+                </div>
+                <div className="text-[11px] font-mono font-bold text-emerald-400">
+                  Sewa: Rp 1.850.000 / bln
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-white">Skala Industri</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300">1.000 Ekor</span>
+                </div>
+                <div className="text-[10px] text-slate-400">
+                  Konstruksi: <strong className="text-amber-300 font-mono">Rp 35M – Rp 55M</strong>
+                </div>
+                <div className="text-[11px] font-mono font-bold text-emerald-400">
+                  Sewa: Rp 3.500.000 / bln
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl">
@@ -834,9 +926,9 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
                 <tr className="border-b border-slate-800 bg-slate-950/80 text-[11px] font-mono uppercase tracking-wider text-slate-400">
                   <th className="py-3 px-4">Jenis Kandang & Spesifikasi</th>
                   <th className="py-3 px-3 text-center">Kapasitas</th>
+                  <th className="py-3 px-3">Acuan Biaya Konstruksi</th>
                   <th className="py-3 px-3">Ventilasi & Pendingin</th>
-                  <th className="py-3 px-3">Sensor IoT (Suhu & RH)</th>
-                  <th className="py-3 px-4 text-right">Biaya Sewa / Bulan</th>
+                  <th className="py-3 px-4 text-right">Biaya Sewa Utility</th>
                   <th className="py-3 px-3 text-center">Status</th>
                   <th className="py-3 px-4 text-center">Aksi Sewa</th>
                 </tr>
@@ -892,6 +984,17 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
                           {item.capacityBirds.toLocaleString()}
                         </span>
                         <span className="text-[10px] text-slate-400 block">Ekor Ayam</span>
+                      </td>
+
+                      <td className="py-3.5 px-3">
+                        <div className="inline-flex flex-col">
+                          <span className="text-amber-300 font-mono font-bold text-[11px]">
+                            {item.constructionCostRangeIdr || 'Tergantung Desain'}
+                          </span>
+                          <span className="text-[9px] text-slate-500">
+                            {item.scaleCategory === 'LAHAN' ? 'Plot Tanah' : 'Capex Fisik Dieliminasi'}
+                          </span>
+                        </div>
                       </td>
 
                       <td className="py-3.5 px-3 max-w-[200px]">

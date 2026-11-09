@@ -105,7 +105,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Suplai bibit Isa Brown, pakan, vaksin, listrik, dan ventilasi selalu tersedia via kuota digital berkelanjutan & Pre-Order Batch terjadwal.
+            Suplai 5 strain bibit pullet siap telur (Hy-Line, Lohmann, Isa, Hisex, Arab/Lokal), pakan konsentrat 21%, vaksin, listrik, dan AC conditioner selalu tersedia 24/7.
           </p>
         </div>
 

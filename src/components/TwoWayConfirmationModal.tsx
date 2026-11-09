@@ -113,7 +113,6 @@ export const TwoWayConfirmationModal: React.FC<TwoWayConfirmationModalProps> = (
   const handleSenderSubmitPayment = async () => {
     if (amountIdr <= 0) {
       sounds.playError();
-      alert('Nominal pembayaran tidak valid.');
       return;
     }
 

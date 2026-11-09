@@ -76,6 +76,7 @@ interface SovereignIdentityHeaderProps {
   onOpenAuthModal?: () => void;
   authUser?: any;
   onSignOut?: () => void;
+  onOpenCertifications?: () => void;
 }
 
 export const SovereignIdentityHeader: React.FC<SovereignIdentityHeaderProps> = ({
@@ -118,6 +119,7 @@ export const SovereignIdentityHeader: React.FC<SovereignIdentityHeaderProps> = (
   onOpenAuthModal,
   authUser,
   onSignOut,
+  onOpenCertifications,
   farmerCountryFlag = '🇮🇩',
   farmerCountryName = 'Indonesia (Genesis Hub)',
   farmerFlockSize = 40,
@@ -272,6 +274,25 @@ export const SovereignIdentityHeader: React.FC<SovereignIdentityHeaderProps> = (
             >
               <span>ℹ️</span>
               <span className="hidden sm:inline">Tentang Platform</span>
+            </button>
+          )}
+
+          {/* Sertifikasi & Legalitas Resmi Platform Button */}
+          {onOpenCertifications && (
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playClick();
+                onOpenCertifications();
+              }}
+              className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 text-emerald-300 transition border border-emerald-500/40 flex items-center gap-1.5 text-xs font-semibold font-mono shadow-sm"
+              title="Buka Dokumen Sertifikasi Resmi (NKV Kementan, Halal BPJPH, ISO 22000/9001, Audit Web3, PSE Kominfo)"
+            >
+              <span>🎖️</span>
+              <span className="hidden sm:inline">Sertifikasi</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/30 text-emerald-300 font-bold border border-emerald-500/40">
+                7 Resmi
+              </span>
             </button>
           )}
 

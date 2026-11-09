@@ -66,7 +66,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     }
 
     if (typeof window === 'undefined' || !window.ethereum) {
-      alert('MetaMask tidak terdeteksi! Silakan buka melalui peramban Web3 atau pasang ekstensi MetaMask.');
+      sounds.playError();
       return;
     }
 
@@ -128,7 +128,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           onClose();
         }, 1500);
       } else {
-        alert('Gagal menyimpan profil ke database server.');
+        sounds.playError();
       }
     } catch (err) {
       console.error('Kesalahan jaringan:', err);

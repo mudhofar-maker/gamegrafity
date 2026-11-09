@@ -316,6 +316,7 @@ export interface InfrastructurePackage {
   tagline: string;
   recommended?: boolean;
   totalMonthlyRentIdr: number;
+  entryPackagePriceIdr?: number; // Modal paket awal kemitraan all-in (bibit, kandang, vitamin, pakan awal)
   breakdown: {
     landCostIdr: number;
     coopCostIdr: number;
@@ -361,6 +362,10 @@ export interface MetaverseCoopItem {
   eggBonusPercent: number;
   badge: string;
   recommended?: boolean;
+  constructionCostRangeIdr?: string;
+  constructionCostMinIdr?: number;
+  constructionCostMaxIdr?: number;
+  scaleCategory?: 'SKALA_KECIL_50' | 'SKALA_MENENGAH_100' | 'SKALA_KOMERSIAL_500' | 'SKALA_INDUSTRI_1000' | 'LAHAN';
   specDetails: {
     dimensions: string;
     feederType: string;

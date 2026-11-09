@@ -49,6 +49,36 @@ export const FarmVisualizer: React.FC<FarmVisualizerProps> = ({
         </div>
       </div>
 
+      {/* 24/7 Autopilot Automated Production Notice */}
+      <div className="bg-gradient-to-r from-emerald-950/60 via-slate-950 to-teal-950/60 border border-emerald-500/30 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-inner">
+        <div className="flex items-center gap-2.5">
+          <div className="relative flex items-center justify-center">
+            <span className="w-3 h-3 rounded-full bg-emerald-400 animate-ping absolute" />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 relative" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black uppercase tracking-wider text-emerald-300 font-mono">
+                Produksi Berjalan Otomatis (24/7 Autopilot)
+              </span>
+              <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold border border-emerald-500/40">
+                Auto-Lay & Auto-Feed
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Aliran telur bertelur live, pakan terisi otomatis dari silo hulu, dan suhu 24°C terjaga tanpa henti. Cukup <strong className="text-cyan-300">Top-Up Awal</strong> & <strong className="text-amber-300">Jual Panen / Tarik Dana (WD) Manual</strong> di akhir.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-mono">
+          <span className="text-slate-400">Status Siklus:</span>
+          <span className="text-emerald-400 font-bold bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Live Streaming
+          </span>
+        </div>
+      </div>
+
       {/* Primary Key Stats Cards Grid (Matching user brief layout) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         {/* Card 1: Populasi Aktif */}
@@ -229,7 +259,7 @@ export const FarmVisualizer: React.FC<FarmVisualizerProps> = ({
 
         {/* Action Controls for Biological Cycle */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-          {/* Action 1: Majukan Siklus 1 Hari */}
+          {/* Action 1: Majukan Siklus 1 Hari (Opsional Turbo Boost) */}
           <button
             type="button"
             id="btn-advance-cycle"
@@ -238,13 +268,13 @@ export const FarmVisualizer: React.FC<FarmVisualizerProps> = ({
               onAdvanceCycle();
             }}
             disabled={!canAdvance}
-            className="py-3 px-4 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-slate-950 font-bold text-xs tracking-wide shadow-lg shadow-amber-950/40 flex items-center justify-center gap-2 transition active:scale-[0.98] disabled:opacity-50"
+            className="py-3 px-4 rounded-xl bg-gradient-to-r from-amber-600/80 via-amber-500/80 to-yellow-500/80 hover:from-amber-500 hover:to-yellow-400 text-slate-950 font-bold text-xs tracking-wide shadow-lg shadow-amber-950/40 flex items-center justify-center gap-2 transition active:scale-[0.98] disabled:opacity-50"
           >
             <Clock className="w-4 h-4 text-slate-950" />
-            <span>Majukan Siklus 1 Hari (Generate Panen)</span>
+            <span>Akselerasi 1 Hari Tambahan (Turbo Opsional)</span>
           </button>
 
-          {/* Action 2: Jual Semua Telur ke Broker / Tarik Saldo */}
+          {/* Action 2: Jual Panen / Tarik Dana (WD) Manual */}
           <button
             type="button"
             id="btn-withdraw-eggs"
@@ -252,10 +282,10 @@ export const FarmVisualizer: React.FC<FarmVisualizerProps> = ({
               sounds.playClick();
               onOpenWithdraw();
             }}
-            className="py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs tracking-wide shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 transition active:scale-[0.98]"
+            className="py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs tracking-wide shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 transition active:scale-[0.98] ring-2 ring-emerald-400/30"
           >
             <Sparkles className="w-4 h-4 text-emerald-200" />
-            <span>Jual Semua Telur ke Broker ({formatRupiah(eggValueIdr)})</span>
+            <span>Jual Panen / Tarik Dana (WD) Manual ({formatRupiah(eggValueIdr)})</span>
           </button>
         </div>
       </div>

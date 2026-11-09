@@ -28,6 +28,7 @@ interface AboutGamegrafityModalProps {
   onOpenQrisModal?: () => void;
   onOpenPersonalDashboard?: () => void;
   onOpenTopUp?: () => void;
+  onOpenCertifications?: () => void;
 }
 
 export const AboutGamegrafityModal: React.FC<AboutGamegrafityModalProps> = ({
@@ -36,6 +37,7 @@ export const AboutGamegrafityModal: React.FC<AboutGamegrafityModalProps> = ({
   onOpenQrisModal,
   onOpenPersonalDashboard,
   onOpenTopUp,
+  onOpenCertifications,
 }) => {
   const [copiedBca, setCopiedBca] = useState(false);
 
@@ -253,6 +255,49 @@ export const AboutGamegrafityModal: React.FC<AboutGamegrafityModalProps> = ({
                     Tarik keuntungan bersih Anda secara langsung ke DANA, rekening bank lokal, atau dompet digital kapan pun siklus selesai.
                   </p>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Sertifikasi & Legalitas Resmi */}
+          <div className="p-5 rounded-2xl bg-slate-950/80 border border-emerald-500/30 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🎖️</span>
+                <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider font-mono">
+                  Sertifikasi &amp; Standar Mutu Resmi
+                </h3>
+              </div>
+              {onOpenCertifications && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenCertifications();
+                  }}
+                  className="text-xs font-mono text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1"
+                >
+                  Lihat 7 Sertifikat →
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[10px] font-mono">
+              <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                <div className="text-emerald-400 font-bold">NKV TINGKAT 1</div>
+                <div className="text-slate-400 text-[9px] mt-0.5">Kementan RI</div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                <div className="text-emerald-400 font-bold">HALAL 100%</div>
+                <div className="text-slate-400 text-[9px] mt-0.5">BPJPH &amp; MUI</div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                <div className="text-cyan-400 font-bold">ISO 22000 &amp; 9001</div>
+                <div className="text-slate-400 text-[9px] mt-0.5">KAN / ISO Global</div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                <div className="text-purple-400 font-bold">SMART CONTRACT</div>
+                <div className="text-slate-400 text-[9px] mt-0.5">0 Vulnerability</div>
               </div>
             </div>
           </div>

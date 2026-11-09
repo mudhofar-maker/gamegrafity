@@ -93,11 +93,11 @@ export const SovereignMonetaryDirectiveModal: React.FC<SovereignMonetaryDirectiv
           onRefreshParent();
         }
       } else {
-        alert(`Gagal serap: ${data.message}`);
+        sounds.playError();
       }
     } catch (err) {
       console.error(err);
-      alert('Terjadi kesalahan saat mengeksekusi serap tanpa batas.');
+      sounds.playError();
     } finally {
       setIsSimulating(false);
     }

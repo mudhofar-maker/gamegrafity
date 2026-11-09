@@ -78,16 +78,16 @@ export const PartialAutoCompoundPanel: React.FC<PartialAutoCompoundPanelProps> =
   // Monthly Simulation Calculations
   const calc = useMemo(() => {
     const birds = simulatedFlockBase;
-    const dailyEggs = Math.floor(birds * 0.88);
+    const dailyEggs = Math.floor(birds * 0.85); // 85% Hen-Day lay rate
     const monthlyEggs = dailyEggs * 30;
     const monthlyKg = Number(((monthlyEggs * 62.5) / 1000).toFixed(1));
-    const grossRevenue = monthlyKg * 30000; // Rp 30.000 / Kg
+    const grossRevenue = Math.round(monthlyKg * 21500); // Rp 21.500 / Kg acuan broker
 
-    // Package cost
-    const packageCost = birds <= 150 ? 1250000 : birds <= 500 ? 2350000 : 4000000;
-    // Feed: 3.3 kg/month * Rp 7.000/kg
-    const feedCost = Math.round(birds * 3.3 * 7000);
-    const utilityCost = birds <= 150 ? 500000 : birds <= 500 ? 1200000 : 3500000;
+    // Monthly coop utility rent
+    const packageCost = birds <= 100 ? 550000 : birds <= 500 ? 2350000 : 4000000;
+    // Feed: 3.4 kg/month * Rp 11.500/kg (Pakan Fase 4 Layer Puncak)
+    const feedCost = Math.round(birds * 3.4 * 11500);
+    const utilityCost = birds <= 100 ? 250000 : birds <= 500 ? 600000 : 1200000;
     const totalExpenses = packageCost + feedCost + utilityCost;
 
     // Monthly Net Profit
@@ -97,12 +97,16 @@ export const PartialAutoCompoundPanel: React.FC<PartialAutoCompoundPanelProps> =
     const compoundSharePercent = config.autoCompoundPercent;
 
     const cashPayout = Math.round((netProfit * cashSharePercent) / 100);
-    const compoundPayout = Math.round((netProfit * compoundSharePercent) / 100);
+    const compoundGross = Math.round((netProfit * compoundSharePercent) / 100);
 
-    // Compound power: How many birds and how much feed does it buy?
-    // Pullet Rp 45.000 / bird, Feed Rp 7.000 / kg
-    const newBirdsFromCompound = Math.floor((compoundPayout * 0.6) / 45000);
-    const newFeedKgFromCompound = Math.floor((compoundPayout * 0.4) / 7000);
+    // Biaya Administrasi Auto-Compounding Kas Owner (3.5%)
+    // Fasilitas auto-compounding adalah sumber keuntungan nyata bagi owner platform
+    const ownerCompoundingAdminFee = Math.round(compoundGross * 0.035);
+    const compoundPayout = compoundGross - ownerCompoundingAdminFee;
+
+    // Compound power: Pullet Siap Produksi 18 Minggu Rp 85.000, Pakan Layer Rp 11.500/kg
+    const newBirdsFromCompound = Math.floor((compoundPayout * 0.6) / 85000);
+    const newFeedKgFromCompound = Math.floor((compoundPayout * 0.4) / 11500);
 
     // Multi-month growth simulation
     // Month 1
@@ -116,19 +120,22 @@ export const PartialAutoCompoundPanel: React.FC<PartialAutoCompoundPanelProps> =
     const m2Birds = m1Birds + m1AddedBirds;
     const m2Net = Math.round(m1Net * (m2Birds / m1Birds));
     const m2Cash = Math.round((m2Net * cashSharePercent) / 100);
-    const m2Compound = Math.round((m2Net * compoundSharePercent) / 100);
-    const m2AddedBirds = Math.floor((m2Compound * 0.6) / 45000);
+    const m2GrossComp = Math.round((m2Net * compoundSharePercent) / 100);
+    const m2Compound = m2GrossComp - Math.round(m2GrossComp * 0.035);
+    const m2AddedBirds = Math.floor((m2Compound * 0.6) / 85000);
 
     // Month 3 (Compounded)
     const m3Birds = m2Birds + m2AddedBirds;
     const m3Net = Math.round(m1Net * (m3Birds / m1Birds));
     const m3Cash = Math.round((m3Net * cashSharePercent) / 100);
-    const m3Compound = Math.round((m3Net * compoundSharePercent) / 100);
-    const m3AddedBirds = Math.floor((m3Compound * 0.6) / 45000);
+    const m3GrossComp = Math.round((m3Net * compoundSharePercent) / 100);
+    const m3Compound = m3GrossComp - Math.round(m3GrossComp * 0.035);
+    const m3AddedBirds = Math.floor((m3Compound * 0.6) / 85000);
 
     const total3MonthsCash = m1Cash + m2Cash + m3Cash;
     const totalFlockGrowth = m1AddedBirds + m2AddedBirds + m3AddedBirds;
-    const totalAssetValueAdded = totalFlockGrowth * 45000;
+    const totalAssetValueAdded = totalFlockGrowth * 85000;
+    const total3MonthsOwnerAdminFee = ownerCompoundingAdminFee + Math.round(m2GrossComp * 0.035) + Math.round(m3GrossComp * 0.035);
 
     return {
       birds,
@@ -142,6 +149,7 @@ export const PartialAutoCompoundPanel: React.FC<PartialAutoCompoundPanelProps> =
       netProfit,
       cashPayout,
       compoundPayout,
+      ownerCompoundingAdminFee,
       newBirdsFromCompound,
       newFeedKgFromCompound,
       projection: [
@@ -151,7 +159,8 @@ export const PartialAutoCompoundPanel: React.FC<PartialAutoCompoundPanelProps> =
       ],
       total3MonthsCash,
       totalFlockGrowth,
-      totalAssetValueAdded
+      totalAssetValueAdded,
+      total3MonthsOwnerAdminFee
     };
   }, [simulatedFlockBase, config.cashPayoutPercent, config.autoCompoundPercent]);
 

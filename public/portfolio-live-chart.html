@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Portfolio & Live Chart | Gamegrafity Agro-Fi</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            dark: {
+              950: '#060913',
+              900: '#0b1120',
+              850: '#0f172a',
+              800: '#1e293b',
+              700: '#334155',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts & Chart.js CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      background-color: #060913;
+      color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #0b1120;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 6px #10b981); }
+      50% { opacity: 0.6; transform: scale(0.92); filter: drop-shadow(0 0 2px #10b981); }
+    }
+    .pulse-indicator {
+      animation: pulseGlow 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#060913] text-slate-100 flex flex-col antialiased selection:bg-cyan-500 selection:text-white">
+
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center font-black text-white text-base shadow-lg shadow-cyan-500/20">
+          🐔
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-base font-extrabold text-white tracking-tight flex items-center gap-2">
+            <span>Gamegrafity Live Portfolio</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">v2.5</span>
+          </h1>
+          <p class="text-[11px] text-slate-400 hidden sm:block">Sovereign Agro-Fi &amp; Treasury Live Asset Oracle</p>
+        </div>
+      </div>
+
+      <!-- Live Heartbeat & Controls -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs font-mono">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 pulse-indicator"></span>
+          <span class="text-slate-300 font-semibold hidden md:inline">Sinkronisasi:</span>
+          <span id="syncStatusBadge" class="text-emerald-400 font-bold">ONLINE</span>
+        </div>
+        <button id="toggleFeedBtn" onclick="toggleFeed()" class="px-3 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 text-xs font-semibold font-mono transition flex items-center gap-1.5">
+          <span id="toggleFeedIcon">⏸</span>
+          <span id="toggleFeedText" class="hidden sm:inline">Jeda Feed</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 w-full">
+
+    <!-- 1. Header Ringkasan Metrik (Summary Cards) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Card 1: Total Nilai Portofolio -->
+      <div class="p-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800 hover:border-cyan-500/40 transition shadow-xl relative overflow-hidden">
+        <div class="absolute -right-4 -bottom-4 w-20 h-20 bg-cyan-500/10 rounded-full blur-xl pointer-events-none"></div>
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span class="font-medium">Total Nilai Portofolio</span>
+          <span id="pnlBadge" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">+3.42%</span>
+        </div>
+        <div id="totalPortfolioVal" class="text-xl sm:text-2xl font-black font-mono text-white tracking-tight">
+          Rp 84.750.000
+        </div>
+        <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-between font-mono">
+          <span>Target Likuiditas:</span>
+          <span class="text-slate-200">100% Invarian Aman</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Saldo Kas Treasury Pusat (BCA Cikarang) -->
+      <div class="p-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800 hover:border-indigo-500/40 transition shadow-xl relative overflow-hidden">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span class="font-medium">Kas Treasury (BCA)</span>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">Dual-Payout</span>
+        </div>
+        <div id="treasuryCashVal" class="text-xl sm:text-2xl font-black font-mono text-cyan-300 tracking-tight">
+          Rp 38.250.000
+        </div>
+        <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-between font-mono">
+          <span>Rekening Resmi:</span>
+          <span class="text-slate-300">3432650071</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Nilai Aset Ternak & Telur (Q) -->
+      <div class="p-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800 hover:border-amber-500/40 transition shadow-xl relative overflow-hidden">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span class="font-medium">Valuasi Komoditas (Q)</span>
+          <span id="commodityCountVal" class="text-[11px] font-mono text-amber-400 font-bold">1.480 Kg</span>
+        </div>
+        <div id="commodityWorthVal" class="text-xl sm:text-2xl font-black font-mono text-amber-300 tracking-tight">
+          Rp 41.500.000
+        </div>
+        <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-between font-mono">
+          <span>Harga Serap (H_broker):</span>
+          <span class="text-emerald-400 font-bold">&gt; HPP Riil</span>
+        </div>
+      </div>
+
+      <!-- Card 4: Waktu Pembaruan & Frekuensi -->
+      <div class="p-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800 hover:border-emerald-500/40 transition shadow-xl relative overflow-hidden">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span class="font-medium">Waktu Pembaruan Terakhir</span>
+          <span class="text-[10px] font-mono text-slate-400">Interval: 3s</span>
+        </div>
+        <div id="lastUpdateTimestamp" class="text-lg sm:text-xl font-bold font-mono text-white tracking-tight">
+          14:32:05 WIB
+        </div>
+        <div class="text-[11px] text-emerald-400 mt-2 flex items-center justify-between font-mono">
+          <span>Latensi Data:</span>
+          <span>&lt; 15 ms (Client-Side)</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 2. Grafik Garis (Live Line Chart) Responsif -->
+    <div class="p-5 sm:p-6 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-2xl space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <span>📈 Grafik Pertumbuhan Portofolio Real-Time</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              Live Stream
+            </span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Visualisasi fluktuasi pergerakan nilai aset kas treasury dan komoditas panen per detik
+          </p>
+        </div>
+
+        <!-- Filter / Speed Toggle -->
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+          <span class="text-xs text-slate-400 font-mono hidden sm:inline">Kecepatan:</span>
+          <select id="feedSpeedSelect" onchange="changeSpeed(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-cyan-500">
+            <option value="2000">Cepat (2 dtk)</option>
+            <option value="3000" selected>Normal (3 dtk)</option>
+            <option value="5000">Santai (5 dtk)</option>
+          </select>
+          <button onclick="resetChartData()" class="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white border border-slate-700 transition" title="Reset Grafik">
+            🔄
+          </button>
+        </div>
+      </div>
+
+      <!-- Chart Container with Guaranteed Responsive Aspect Ratio (No Layout Shift) -->
+      <div class="relative w-full h-[280px] sm:h-[340px]">
+        <canvas id="portfolioLiveChart"></canvas>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between text-xs text-slate-400 font-mono pt-2 border-t border-slate-800/60">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-1 bg-cyan-400 rounded-full"></span>
+            <span>Total Valuasi Portofolio</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-1 bg-emerald-400 rounded-full"></span>
+            <span>Kas Treasury BCA</span>
+          </div>
+        </div>
+        <div class="text-[11px] text-slate-500">
+          Data tersimpan dalam buffer 15 titik terakhir
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Tabel Rincian Komponen Aset Pendukung -->
+    <div class="rounded-3xl bg-slate-900/80 border border-slate-800 shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+            <span>📦 Rincian Komponen Aset &amp; Status Kandang Terhubung</span>
+            <span class="text-xs font-mono text-slate-400 font-normal">(5 Aset Utama)</span>
+          </h3>
+          <p class="text-xs text-slate-400 mt-0.5">Perubahan harga per detik otomatis tercermin pada tabel di bawah</p>
+        </div>
+        <span class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 self-start sm:self-auto">
+          ● Auto-Rebalance Active
+        </span>
+      </div>
+
+      <div class="overflow-x-auto custom-scroll">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-950/80 text-slate-400 uppercase font-mono text-[10px] tracking-wider border-b border-slate-800">
+            <tr>
+              <th scope="col" class="py-3 px-4">Nama Aset / Alokasi</th>
+              <th scope="col" class="py-3 px-4">Kategori</th>
+              <th scope="col" class="py-3 px-4 text-right">Volume / Qty</th>
+              <th scope="col" class="py-3 px-4 text-right">Harga Satuan</th>
+              <th scope="col" class="py-3 px-4 text-right">Total Valuasi</th>
+              <th scope="col" class="py-3 px-4 text-center">Fluktuasi</th>
+              <th scope="col" class="py-3 px-4 text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody id="assetsTableBody" class="divide-y divide-slate-800/80 font-mono">
+            <!-- Rendered dynamically by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 py-6 text-center text-xs text-slate-500 font-mono mt-8">
+    <p>© 2026 Gamegrafity Farm • Single-File Architecture (Tailwind CSS + Chart.js Real-Time Engine)</p>
+  </footer>
+
+  <!-- Real-Time Logic & Chart.js Controller -->
+  <script>
+    // 1. Data Model Awal
+    const assetsData = [
+      {
+        id: 'treasury-bca',
+        name: 'Kas Treasury BCA Cikarang',
+        sub: 'No. Rek: 3432650071 a.n. MUDHOFAR',
+        category: 'Likuiditas Fiat',
+        qty: '1 Akun',
+        unitPrice: 38250000,
+        totalValue: 38250000,
+        change24h: 0.15,
+        status: 'KLIRING AMAN',
+        statusColor: 'emerald'
+      },
+      {
+        id: 'eggs-layer',
+        name: 'Telur Ayam Segar Grade A/B',
+        sub: 'Stok Gudang Fisik & Virtual Offtake',
+        category: 'Hasil Panen (Q)',
+        qty: '1.480 Kg',
+        baseQtyNum: 1480,
+        unitPrice: 28000,
+        totalValue: 41440000,
+        change24h: 2.45,
+        status: 'TERSERAP BROKER',
+        statusColor: 'cyan'
+      },
+      {
+        id: 'chicken-pullet',
+        name: 'Populasi Ayam Layer Aktif',
+        sub: 'Kandang Bertingkat Smart Closed-House',
+        category: 'Biologi Ternak',
+        qty: '500 Ekor',
+        unitPrice: 75000,
+        totalValue: 37500000,
+        change24h: 0.00,
+        status: 'PRODUKTIF 92%',
+        statusColor: 'emerald'
+      },
+      {
+        id: 'feed-reserve',
+        name: 'Cadangan Pakan Konsentrat 21%',
+        sub: 'Silo Terdistribusi Mandiri',
+        category: 'Pakan & Nutrisi',
+        qty: '850 Kg',
+        unitPrice: 7200,
+        totalValue: 6120000,
+        change24h: -0.40,
+        status: 'TERSEDIA 14 HARI',
+        statusColor: 'amber'
+      },
+      {
+        id: 'iot-infrastructure',
+        name: 'Modul IoT & Climate Control',
+        sub: 'Inverter Exhaust & Cooling Pad',
+        category: 'Infrastruktur',
+        qty: '1 Paket Multi-Tier',
+        unitPrice: 2350000,
+        totalValue: 2350000,
+        change24h: 0.00,
+        status: 'ONLINE 24/7',
+        statusColor: 'indigo'
+      }
+    ];
+
+    // Formatter Rupiah
+    function formatRupiah(num) {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0
+      }).format(num);
+    }
+
+    // Hitung Total Portofolio
+    function calculateTotalPortfolio() {
+      return assetsData.reduce((sum, asset) => sum + asset.totalValue, 0);
+    }
+
+    // 2. Inisialisasi Chart.js
+    const ctx = document.getElementById('portfolioLiveChart').getContext('2d');
+
+    // Gradien Warna Background Chart
+    const gradientPortfolio = ctx.createLinearGradient(0, 0, 0, 300);
+    gradientPortfolio.addColorStop(0, 'rgba(6, 182, 212, 0.35)');
+    gradientPortfolio.addColorStop(1, 'rgba(6, 182, 212, 0.00)');
+
+    const gradientTreasury = ctx.createLinearGradient(0, 0, 0, 300);
+    gradientTreasury.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+    gradientTreasury.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
+
+    // Data Awal Buffer (12 titik)
+    const initialLabels = [];
+    const initialPortfolioPoints = [];
+    const initialTreasuryPoints = [];
+    let baseVal = 84000000;
+    let baseTreasury = 38000000;
+
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const pastTime = new Date(now.getTime() - i * 3000);
+      const timeStr = pastTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      initialLabels.push(timeStr);
+
+      baseVal += (Math.random() - 0.48) * 120000;
+      baseTreasury += (Math.random() - 0.48) * 45000;
+      initialPortfolioPoints.push(Math.round(baseVal));
+      initialTreasuryPoints.push(Math.round(baseTreasury));
+    }
+
+    const portfolioChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: initialLabels,
+        datasets: [
+          {
+            label: 'Total Portofolio (IDR)',
+            data: initialPortfolioPoints,
+            borderColor: '#06b6d4',
+            backgroundColor: gradientPortfolio,
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#06b6d4',
+            pointBorderColor: '#0b1120',
+            pointBorderWidth: 2
+          },
+          {
+            label: 'Kas Treasury BCA (IDR)',
+            data: initialTreasuryPoints,
+            borderColor: '#10b981',
+            backgroundColor: gradientTreasury,
+            borderWidth: 2,
+            borderDash: [4, 4],
+            fill: true,
+            tension: 0.35,
+            pointRadius: 0,
+            pointHoverRadius: 5
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+          duration: 600,
+          easing: 'easeOutQuart'
+        },
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: '#0b1120',
+            titleColor: '#f1f5f9',
+            bodyColor: '#cbd5e1',
+            borderColor: '#334155',
+            borderWidth: 1,
+            padding: 10,
+            displayColors: true,
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) label += ': ';
+                if (context.parsed.y !== null) {
+                  label += formatRupiah(context.parsed.y);
+                }
+                return label;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              color: 'rgba(51, 65, 85, 0.25)',
+              drawBorder: false
+            },
+            ticks: {
+              color: '#64748b',
+              font: { family: 'JetBrains Mono', size: 10 },
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 6
+            }
+          },
+          y: {
+            grid: {
+              color: 'rgba(51, 65, 85, 0.25)',
+              drawBorder: false
+            },
+            ticks: {
+              color: '#64748b',
+              font: { family: 'JetBrains Mono', size: 10 },
+              callback: function(value) {
+                return 'Rp ' + (value / 1000000).toFixed(1) + 'M';
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // 3. Render Tabel Aset
+    function renderAssetsTable() {
+      const tbody = document.getElementById('assetsTableBody');
+      tbody.innerHTML = '';
+
+      assetsData.forEach(asset => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 transition';
+
+        const pnlColor = asset.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400';
+        const pnlSign = asset.change24h >= 0 ? '+' : '';
+
+        tr.innerHTML = `
+          <td class="py-3 px-4">
+            <div class="font-bold text-white">${asset.name}</div>
+            <div class="text-[10px] text-slate-400">${asset.sub}</div>
+          </td>
+          <td class="py-3 px-4 text-slate-300">
+            <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700/60 text-[10px]">
+              ${asset.category}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-right text-slate-200 font-semibold">${asset.qty}</td>
+          <td class="py-3 px-4 text-right text-slate-400">${formatRupiah(asset.unitPrice)}</td>
+          <td class="py-3 px-4 text-right font-bold text-white">${formatRupiah(asset.totalValue)}</td>
+          <td class="py-3 px-4 text-center font-bold ${pnlColor}">
+            ${pnlSign}${asset.change24h.toFixed(2)}%
+          </td>
+          <td class="py-3 px-4 text-center">
+            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-${asset.statusColor}-500/20 text-${asset.statusColor}-300 border border-${asset.statusColor}-500/30">
+              ${asset.status}
+            </span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 4. Update Loop Real-Time
+    let isFeedActive = true;
+    let feedIntervalTime = 3000;
+    let timerId = null;
+
+    function tickUpdate() {
+      if (!isFeedActive) return;
+
+      // Simulasi fluktuasi harga komoditas telur & kas treasury
+      const eggAsset = assetsData.find(a => a.id === 'eggs-layer');
+      const treasuryAsset = assetsData.find(a => a.id === 'treasury-bca');
+
+      const eggPriceDelta = (Math.random() - 0.48) * 200; // fluktuasi Rp 50 - 100/kg
+      eggAsset.unitPrice = Math.max(26000, Math.round(eggAsset.unitPrice + eggPriceDelta));
+      eggAsset.totalValue = eggAsset.unitPrice * eggAsset.baseQtyNum;
+      eggAsset.change24h = Number((eggAsset.change24h + (Math.random() - 0.5) * 0.1).toFixed(2));
+
+      const treasuryDelta = (Math.random() - 0.48) * 35000;
+      treasuryAsset.totalValue = Math.round(treasuryAsset.totalValue + treasuryDelta);
+      treasuryAsset.unitPrice = treasuryAsset.totalValue;
+
+      const totalPortfolio = calculateTotalPortfolio();
+
+      // Update Tampilan DOM
+      document.getElementById('totalPortfolioVal').innerText = formatRupiah(totalPortfolio);
+      document.getElementById('treasuryCashVal').innerText = formatRupiah(treasuryAsset.totalValue);
+      document.getElementById('commodityWorthVal').innerText = formatRupiah(eggAsset.totalValue);
+
+      const currentTime = new Date();
+      const timeString = currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+      document.getElementById('lastUpdateTimestamp').innerText = timeString;
+
+      // Tambahkan titik baru ke chart (Maksimal 15 data points)
+      portfolioChart.data.labels.push(currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      portfolioChart.data.datasets[0].data.push(totalPortfolio);
+      portfolioChart.data.datasets[1].data.push(treasuryAsset.totalValue);
+
+      if (portfolioChart.data.labels.length > 15) {
+        portfolioChart.data.labels.shift();
+        portfolioChart.data.datasets[0].data.shift();
+        portfolioChart.data.datasets[1].data.shift();
+      }
+
+      portfolioChart.update('none'); // Update halus tanpa redraw animasi kaku
+      renderAssetsTable();
+    }
+
+    // Mulai Interval
+    function startFeedTimer() {
+      if (timerId) clearInterval(timerId);
+      timerId = setInterval(tickUpdate, feedIntervalTime);
+    }
+
+    // Toggle Feed
+    function toggleFeed() {
+      isFeedActive = !isFeedActive;
+      const statusBadge = document.getElementById('syncStatusBadge');
+      const toggleText = document.getElementById('toggleFeedText');
+      const toggleIcon = document.getElementById('toggleFeedIcon');
+
+      if (isFeedActive) {
+        statusBadge.innerText = 'ONLINE';
+        statusBadge.className = 'text-emerald-400 font-bold';
+        toggleText.innerText = 'Jeda Feed';
+        toggleIcon.innerText = '⏸';
+      } else {
+        statusBadge.innerText = 'PAUSED';
+        statusBadge.className = 'text-amber-400 font-bold';
+        toggleText.innerText = 'Lanjutkan';
+        toggleIcon.innerText = '▶';
+      }
+    }
+
+    // Ganti Interval Kecepatan
+    function changeSpeed(ms) {
+      feedIntervalTime = parseInt(ms, 10);
+      startFeedTimer();
+    }
+
+    // Reset Data
+    function resetChartData() {
+      portfolioChart.data.labels = [];
+      portfolioChart.data.datasets[0].data = [];
+      portfolioChart.data.datasets[1].data = [];
+      portfolioChart.update();
+      tickUpdate();
+    }
+
+    // Eksekusi Awal Saat Halaman Siap
+    renderAssetsTable();
+    document.getElementById('totalPortfolioVal').innerText = formatRupiah(calculateTotalPortfolio());
+    document.getElementById('lastUpdateTimestamp').innerText = new Date().toLocaleTimeString('id-ID') + ' WIB';
+    startFeedTimer();
+  </script>
+</body>
+</html>

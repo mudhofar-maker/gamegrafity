@@ -76,10 +76,13 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
 
   const currentAmount = customAmount ? parseInt(customAmount) || 0 : selectedAmount;
 
+  const [inputError, setInputError] = useState<string | null>(null);
+
   const handleSimulatePayment = () => {
+    setInputError(null);
     if (currentAmount < 10000) {
       sounds.playError();
-      alert('Minimal pembayaran adalah Rp 10.000');
+      setInputError('Minimal pembayaran adalah Rp 10.000');
       return;
     }
     sounds.playQrisScan();

@@ -26,7 +26,11 @@ export interface UseMetaMaskReturn {
 
 export function useMetaMask(): UseMetaMaskReturn {
   const [account, setAccount] = useState<string | null>(() => {
-    return localStorage.getItem('gamegrafity_profile_wallet') || null;
+    try {
+      return localStorage.getItem('gamegrafity_profile_wallet') || null;
+    } catch {
+      return null;
+    }
   });
   const [chainId, setChainId] = useState<number | null>(null);
   const [balanceEth, setBalanceEth] = useState<string | null>(null);
@@ -171,7 +175,6 @@ export function useMetaMask(): UseMetaMaskReturn {
       }
 
       setError('MetaMask tidak terdeteksi. Silakan pasang ekstensi browser MetaMask dari https://metamask.io');
-      alert('MetaMask tidak terdeteksi di browser ini!\n\nSilakan pasang ekstensi MetaMask (https://metamask.io) atau buka halaman ini melalui peramban DApp di MetaMask Mobile.');
       return null;
     }
 

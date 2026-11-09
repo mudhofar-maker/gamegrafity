@@ -24,6 +24,7 @@ import { getOrCreateSovereignWallet, IDR_PER_EGG } from './services/web3Service'
 import { formatRupiah, formatEth, shortenAddress } from './utils/formatters';
 import { sounds } from './utils/soundEffects';
 import { calculateEmergencyDirective } from './utils/emergencyEngine';
+import { calculateSpentHensGramasi } from './utils/gramasiEngine';
 import { useMetaMask } from './hooks/useMetaMask';
 import { OWNER_METAMASK_ADDRESS } from './config/web3Config';
 import { OFFICIAL_BCA_CONFIG } from './config/bankConfig';
@@ -57,6 +58,10 @@ import { FarmerAccountSwitcherModal } from './components/FarmerAccountSwitcherMo
 import { SovereignMonetaryDirectiveModal } from './components/SovereignMonetaryDirectiveModal';
 import { AboutGamegrafityModal } from './components/AboutGamegrafityModal';
 import { AuthModal, AuthUser } from './components/AuthModal';
+import { LivePortfolioChart } from './components/LivePortfolioChart';
+import { CertificationSection } from './components/CertificationSection';
+import { CertificationModal } from './components/CertificationModal';
+import { OfficialCertification } from './data/certificationData';
 import { SupportedLanguage, SupportedCurrency } from './utils/i18n';
 import { INITIAL_MARKET_PRICES } from './data/marketPriceData';
 import { ClimateMode, MarketPriceItem } from './types/farm';
@@ -193,11 +198,19 @@ export default function App() {
 
   // User Profile & Role Settings State (Default: Mudhofar, Owner)
   const [userProfile, setUserProfile] = useState<UserProfileData>(() => {
-    return {
-      fullName: localStorage.getItem('gamegrafity_profile_name') || 'Mudhofar',
-      role: (localStorage.getItem('gamegrafity_profile_role') as 'owner' | 'peternak') || 'owner',
-      walletAddress: localStorage.getItem('gamegrafity_profile_wallet') || null,
-    };
+    try {
+      return {
+        fullName: localStorage.getItem('gamegrafity_profile_name') || 'Mudhofar',
+        role: (localStorage.getItem('gamegrafity_profile_role') as 'owner' | 'peternak') || 'owner',
+        walletAddress: localStorage.getItem('gamegrafity_profile_wallet') || null,
+      };
+    } catch {
+      return {
+        fullName: 'Mudhofar',
+        role: 'owner',
+        walletAddress: null,
+      };
+    }
   });
   const [isOpenProfileModal, setIsOpenProfileModal] = useState<boolean>(false);
 
@@ -238,6 +251,8 @@ export default function App() {
   const [isOpenFarmerSwitcher, setIsOpenFarmerSwitcher] = useState<boolean>(false);
   const [isOpenMonetaryDirectiveModal, setIsOpenMonetaryDirectiveModal] = useState<boolean>(false);
   const [isOpenAboutModal, setIsOpenAboutModal] = useState<boolean>(false);
+  const [isOpenCertificationModal, setIsOpenCertificationModal] = useState<boolean>(false);
+  const [selectedCertId, setSelectedCertId] = useState<string | null>(null);
   
   // Neon PostgreSQL farmers_users Auth State
   const [isOpenAuthModal, setIsOpenAuthModal] = useState<boolean>(false);
@@ -352,32 +367,76 @@ export default function App() {
     fetchActiveFarmer();
   }, [activeFarmerId]);
 
-  // Automated daily production runner: ticks eggs & sensors every 8 seconds when active
+  // ======================== ENGINE PRODUKSI BIOLOGIS OTOMATIS 24/7 ========================
+  // Produksi berjalan secara otomatis tanpa intervensi klik:
+  // 1. Aliran telur bertelur live mengalir otomatis berdasarkan kapasitas layer aktif
+  // 2. Silo pakan terisi dan terkonsumsi otomatis dari rantai pasok hulu (Zero Starvation)
+  // 3. Suhu kandang konstan stabil di 24.0°C dengan pendingin evaporative pad & AC otomatis
+  // 4. Biosekuriti 100% steril (Zero Mortality / Bebas Penyakit)
+  // Transaksi manual HANYA:
+  // - Transaksi Awal: Top-Up saldo / Sewa Paket (via TopUpModal)
+  // - Transaksi Akhir: Jual Panen / Tarik Dana (WD) manual (via WithdrawModal)
   useEffect(() => {
-    if (!activeFarmer || activeFarmer.status !== 'ACTIVE') return;
+    const autoProductionInterval = setInterval(() => {
+      setCycle((prev) => {
+        const activeLayers = prev.cohorts.layerProductiveCount > 0
+          ? prev.cohorts.layerProductiveCount
+          : Math.max(10, Math.floor(prev.population * 0.88));
 
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/farmer-accounts/${activeFarmer.id}/production-tick`, {
+        // Kecepatan streaming telur real-time otomatis berdasarkan kapasitas layer:
+        // - Starter Node (150 ekor): ~2 butir per tick
+        // - Pro IoT Tier-1 (500 ekor): ~5 butir per tick
+        // - Sovereign Mega-House (1500 ekor): ~15 butir per tick
+        // - Default/Starter (40 ekor): ~1 butir per tick
+        const eggsGenerated = Math.max(1, Math.round(activeLayers / 90));
+
+        // Konsumsi pakan wajar
+        const feedConsumed = Number((eggsGenerated * 0.08).toFixed(1));
+        let nextFeed = Math.max(0, prev.feedStockKg - feedConsumed);
+
+        // Suplai pakan otomatis: jika stok pakan di bawah 40 kg, sistem otomatis menambah suplai hulu +60 kg
+        if (nextFeed < 40) {
+          nextFeed += 60;
+        }
+
+        // Suhu otomatis stabil di 24°C (23.9°C - 24.1°C)
+        const stabilizedTemp = Number((24.0 + (Math.random() * 0.3 - 0.15)).toFixed(1));
+
+        return {
+          ...prev,
+          accumulatedEggs: prev.accumulatedEggs + eggsGenerated,
+          feedStockKg: nextFeed,
+          ambientTempC: stabilizedTemp,
+          targetTempC: 24.0,
+          heatStressActive: false,
+          biosecurityHealth: 100, // Zero mortality terjamin
+          cohorts: {
+            ...prev.cohorts,
+            sickChicksCount: 0,
+            virusDetected: false,
+          },
+        };
+      });
+
+      // Sinkronisasi data live production ke akun peternak jika ada
+      if (activeFarmer && activeFarmer.id) {
+        fetch(`/api/farmer-accounts/${activeFarmer.id}/production-tick`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ incrementEggs: 4 })
-        });
-        const data = await res.json();
-        if (data.success && data.liveProduction) {
-          setActiveFarmer((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              liveProduction: data.liveProduction
-            };
-          });
-        }
-      } catch (_) {}
-    }, 8000);
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.liveProduction) {
+              setActiveFarmer((prev) => (prev ? { ...prev, liveProduction: data.liveProduction } : prev));
+            }
+          })
+          .catch(() => {});
+      }
+    }, 4000);
 
-    return () => clearInterval(interval);
-  }, [activeFarmer?.id, activeFarmer?.status]);
+    return () => clearInterval(autoProductionInterval);
+  }, [activeFarmer?.id]);
 
   // Helper to add ledger entry
   const addLedger = (
@@ -415,7 +474,11 @@ export default function App() {
   // Auth Handler: Google & Manual Sign In/Up
   const handleAuthSuccess = (user: AuthUser) => {
     setAuthUser(user);
-    localStorage.setItem('gamegrafity_auth_user', JSON.stringify(user));
+    try {
+      localStorage.setItem('gamegrafity_auth_user', JSON.stringify(user));
+    } catch {
+      // Ignore iframe quota
+    }
     setUserProfile({
       fullName: user.full_name,
       role: user.role,
@@ -440,7 +503,11 @@ export default function App() {
       );
     }
     setAuthUser(null);
-    localStorage.removeItem('gamegrafity_auth_user');
+    try {
+      localStorage.removeItem('gamegrafity_auth_user');
+    } catch {
+      // Ignore
+    }
   };
 
   // Function to transition to Sovereign Mode and cleanse legacy name "Riska"
@@ -788,19 +855,40 @@ export default function App() {
     );
   };
 
-  // ======================== PENJUALAN AYAM AFKIR TUA KE KARKAS ========================
-  const handleSellSpentHens = () => {
-    const spentCount = cycle.cohorts.spentHensAfkirCount;
+  // ======================== PENJUALAN AYAM AFKIR KE BROKER (ACUAN RESMI SISTEM) ========================
+  const handleSellSpentHens = (isTerminalAllOut = false) => {
+    const spentCount = isTerminalAllOut
+      ? (cycle.cohorts.spentHensAfkirCount + cycle.cohorts.layerProductiveCount)
+      : cycle.cohorts.spentHensAfkirCount;
+
     if (spentCount <= 0) return;
 
-    const karkasValue = spentCount * 38000; // Rp 38.000 / ekor
+    // Hitung berdasarkan acuan broker: Rp 35.000 – Rp 45.000 / ekor (acuan sistem Rp 40.000 / ekor atau Rp 15.000 / kg)
+    const afkirCalc = calculateSpentHensGramasi(spentCount, 'PER_EKOR', 40000, 2.50);
+    const karkasValue = afkirCalc.farmerPayout; // Rp 40.000 / ekor
 
     setBalances((prev) => ({
       ...prev,
       saldoDompetSaya: prev.saldoDompetSaya + karkasValue,
+      kasTreasuryOwner: prev.kasTreasuryOwner + afkirCalc.ownerProfit,
     }));
 
     setCycle((prev) => {
+      if (isTerminalAllOut) {
+        // Kondisi kandang menjadi kosong total (All-Out Reset)
+        return {
+          ...prev,
+          population: prev.roosters,
+          hens: 0,
+          cohorts: {
+            ...prev.cohorts,
+            layerProductiveCount: 0,
+            spentHensAfkirCount: 0,
+            growerPulletCount: 0,
+          },
+        };
+      }
+
       const newHens = prev.hens - spentCount;
       const newPop = prev.population - spentCount;
 
@@ -817,8 +905,10 @@ export default function App() {
 
     sounds.playCash();
     addLedger(
-      'PENJUALAN AYAM AFKIR (PASAR KARKAS)',
-      `Menjual ${spentCount} ekor layer tua non-produksi ke pedagang karkas daging potong seharga ${formatRupiah(karkasValue)}. Menghemat pakan dan menyegarkan modal bibit baru.`,
+      isTerminalAllOut
+        ? 'LIKUIDASI UJUNG SIKLUS (KANDANG KOSONG TOTAL)'
+        : 'PENJUALAN AYAM AFKIR KE BROKER / PENGEPUL',
+      `Menjual ${spentCount} ekor ayam afkir ke broker @ ${formatRupiah(40000)}/ekor (acuan Rp 35.000–Rp 45.000/ekor atau setara ${afkirCalc.totalWeightKg.toFixed(1)} Kg @ Rp 15.000/Kg). Peternak menerima likuiditas tunai ${formatRupiah(karkasValue)}. ${isTerminalAllOut ? 'Siklus 1 tahun tuntas: Seluruh ayam terjual dan kandang kosong total (All-Out) untuk persiapan siklus baru.' : ''} Margin offtaker Kas Owner: +${formatRupiah(afkirCalc.ownerProfit)}.`,
       'SALVAGE',
       true,
       karkasValue
@@ -828,11 +918,23 @@ export default function App() {
   // ======================== MASUKKAN TELUR KE MESIN TETAS ========================
   const handleStartIncubationBatch = () => {
     if (cycle.accumulatedEggs < 10) {
-      alert('Dibutuhkan minimal 10 butir telur fertil untuk mesin tetas.');
+      sounds.playError();
+      addLedger(
+        'GAGAL MEMULAI INKUBASI',
+        'Dibutuhkan minimal 10 butir telur fertil untuk dimasukkan ke mesin tetas.',
+        'CYCLE',
+        false
+      );
       return;
     }
     if (cycle.incubatorUnits === 0) {
-      alert('Anda belum memiliki Mesin Tetas Otomatis! Silakan sewa/beli di katalog aset terlebih dahulu.');
+      sounds.playError();
+      addLedger(
+        'MESIN TETAS BELUM TERSEDIA',
+        'Anda belum memiliki Mesin Tetas Otomatis. Silakan sewa/beli di katalog aset terlebih dahulu.',
+        'CYCLE',
+        false
+      );
       return;
     }
 
@@ -1135,23 +1237,66 @@ export default function App() {
           },
         });
 
-        // 3. Update modern coop days in cycle & improve biosecurity & stabilize climate
+        // 3. Update modern coop days in cycle & improve biosecurity & scale population to package capacity
+        const productiveLayers = Math.floor(targetPkg.capacityBirds * 0.88);
+        const pullets = Math.floor(targetPkg.capacityBirds * 0.08);
+        const chicks = Math.floor(targetPkg.capacityBirds * 0.04);
+        const hens = productiveLayers + pullets + chicks;
+
         setCycle((prev) => ({
           ...prev,
+          population: targetPkg.capacityBirds,
+          hens,
+          roosters: 2,
+          feedStockKg: Math.max(prev.feedStockKg, Math.round(targetPkg.capacityBirds * 0.6)),
           modernCoopDaysRemaining: prev.modernCoopDaysRemaining + 30,
           acClimateDaysRemaining: prev.acClimateDaysRemaining + 30,
-          ambientTempC: prev.targetTempC,
+          ambientTempC: 24.0,
+          targetTempC: 24.0,
           heatStressActive: false,
           biosecurityHealth: 100,
-          landPlots: prev.landPlots + 1,
+          landPlots: Math.max(prev.landPlots, Math.ceil(targetPkg.capacityBirds / 50)),
+          cohorts: {
+            ...prev.cohorts,
+            layerProductiveCount: productiveLayers,
+            growerPulletCount: pullets,
+            chicksDocCount: chicks,
+            spentHensAfkirCount: 0,
+            sickChicksCount: 0,
+            virusDetected: false,
+          },
         }));
 
+        // Sinkronkan daftar kandang aktif
+        setCoops([
+          {
+            id: 1,
+            name: `${targetPkg.name} #1`,
+            capacity: targetPkg.capacityBirds,
+            status: 'Active',
+            chickenCount: targetPkg.capacityBirds,
+            tier: targetPkg.name,
+            dailyEggs: Math.floor(targetPkg.capacityBirds * 0.88),
+            feedDailyKg: Math.round(targetPkg.capacityBirds * 0.12),
+            tempC: 24.0,
+            humidityRh: 65,
+            ammoniaPpm: 7.2,
+          },
+        ]);
+
         sounds.playCash();
+        try {
+          confetti({
+            particleCount: 100,
+            spread: 90,
+            origin: { y: 0.5 },
+          });
+        } catch (_) {}
 
         // 4. Catat transaksi ke Live Ledger on-chain
         addLedger(
           `PEMBAYARAN LUNAS (${targetPkg.name})`,
-          `Pembayaran via ${method} lunas sebesar ${formatRupiah(amount)}. Status kandang otomatis AKTIF. Kas Treasury Owner bertambah +${formatRupiah(amount)}. Sensor IoT (24°C / 65% RH / 7.2 PPM) & timer masa sewa 30 hari langsung berjalan 24/7. Kontrak: ${contractCode}.`,
+          `Pembayaran via ${method} lunas sebesar ${formatRupiah(amount)}. Paket '${targetPkg.name}' (Kapasitas ${targetPkg.capacityBirds} ekor, ~${productiveLayers} layer aktif) otomatis AKTIF. Kas Treasury Owner bertambah +${formatRupiah(amount)}. Sensor IoT (24°C / 65% RH) & produksi otomatis 24/7 langsung berjalan. Kontrak: ${contractCode}.`,
           'PURCHASE',
           true,
           amount,
@@ -1195,7 +1340,8 @@ export default function App() {
 
   // ======================== FITUR PARTIAL AUTO-COMPOUND ========================
   const handleExecuteCompoundBatch = (compoundAmountIdr: number, cashPayoutIdr: number) => {
-    const addedBirds = Math.floor((compoundAmountIdr * 0.6) / 45000);
+    // Acuan harga pullet siap telur Rp 88.000 / ekor (rata-rata strain komersial nasional)
+    const addedBirds = Math.floor((compoundAmountIdr * 0.6) / 88000);
     const addedFeedKg = Math.floor((compoundAmountIdr * 0.4) / 7000);
 
     // 1. Porsi Tunai Cair masuk ke saldo peternak, porsi compound masuk ke Kas Owner (beli pakan/bibit)
@@ -1254,7 +1400,12 @@ export default function App() {
     if (balances.saldoDompetSaya < totalCost) {
       sounds.playError();
       const kekurangan = totalCost - balances.saldoDompetSaya;
-      alert(`Saldo dompet tidak cukup. Dibutuhkan ${formatRupiah(totalCost)}, saldo Anda ${formatRupiah(balances.saldoDompetSaya)}. Kurang ${formatRupiah(kekurangan)}.`);
+      addLedger(
+        'SALDO TIDAK MENCUKUPI',
+        `Dibutuhkan ${formatRupiah(totalCost)} untuk ${item.name}, saldo saat ini ${formatRupiah(balances.saldoDompetSaya)}. Kurang ${formatRupiah(kekurangan)}. Silakan Top-Up saldo.`,
+        'SYSTEM',
+        false
+      );
       setIsOpenTopUp(true);
       return;
     }
@@ -1342,9 +1493,8 @@ export default function App() {
   // ======================== SEWA PAKET BUNDLING INFRASTRUKTUR (Lahan + Kandang) ========================
   const handleRentPackage = (pkg: InfrastructurePackage, durationDays = 30, totalCost = pkg.totalMonthlyRentIdr) => {
     if (balances.saldoDompetSaya < totalCost) {
-      sounds.playError();
-      const kekurangan = totalCost - balances.saldoDompetSaya;
-      alert(`Saldo dompet tidak cukup. Dibutuhkan ${formatRupiah(totalCost)}, saldo Anda ${formatRupiah(balances.saldoDompetSaya)}. Kurang ${formatRupiah(kekurangan)}. Silakan top-up terlebih dahulu.`);
+      sounds.playDirectivePing();
+      setTargetCheckoutPackage(pkg);
       setIsOpenTopUp(true);
       return;
     }
@@ -1392,23 +1542,66 @@ export default function App() {
       },
     });
 
-    // 3. Update modern coop days in cycle & improve biosecurity & stabilize climate
+    // 3. Update modern coop days in cycle & improve biosecurity & scale population to package capacity
+    const productiveLayers = Math.floor(pkg.capacityBirds * 0.88);
+    const pullets = Math.floor(pkg.capacityBirds * 0.08);
+    const chicks = Math.floor(pkg.capacityBirds * 0.04);
+    const hens = productiveLayers + pullets + chicks;
+
     setCycle((prev) => ({
       ...prev,
+      population: pkg.capacityBirds,
+      hens,
+      roosters: 2,
+      feedStockKg: Math.max(prev.feedStockKg, Math.round(pkg.capacityBirds * 0.6)),
       modernCoopDaysRemaining: prev.modernCoopDaysRemaining + durationDays,
       acClimateDaysRemaining: prev.acClimateDaysRemaining + durationDays,
-      ambientTempC: prev.targetTempC,
+      ambientTempC: 24.0,
+      targetTempC: 24.0,
       heatStressActive: false,
       biosecurityHealth: 100,
-      landPlots: prev.landPlots + 1,
+      landPlots: Math.max(prev.landPlots, Math.ceil(pkg.capacityBirds / 50)),
+      cohorts: {
+        ...prev.cohorts,
+        layerProductiveCount: productiveLayers,
+        growerPulletCount: pullets,
+        chicksDocCount: chicks,
+        spentHensAfkirCount: 0,
+        sickChicksCount: 0,
+        virusDetected: false,
+      },
     }));
 
+    // Sinkronkan daftar multi-coop
+    setCoops([
+      {
+        id: 1,
+        name: `${pkg.name} #1`,
+        capacity: pkg.capacityBirds,
+        status: 'Active',
+        chickenCount: pkg.capacityBirds,
+        tier: pkg.name,
+        dailyEggs: Math.floor(pkg.capacityBirds * 0.88),
+        feedDailyKg: Math.round(pkg.capacityBirds * 0.12),
+        tempC: 24.0,
+        humidityRh: 65,
+        ammoniaPpm: 7.2,
+      },
+    ]);
+
     sounds.playCash();
+    try {
+      confetti({
+        particleCount: 100,
+        spread: 90,
+        origin: { y: 0.5 },
+      });
+    } catch (_) {}
 
     // 4. Catat transaksi ke Live Ledger
     addLedger(
       `SEWA PAKET BUNDLING (${pkg.name})`,
-      `Berhasil menyewa '${pkg.name}' (Lahan + Kandang) selama ${durationDays} hari seharga ${formatRupiah(totalCost)}. Saldo dompet peternak dipotong, Kas Treasury Owner bertambah +${formatRupiah(totalCost)}. Kapasitas: ${pkg.capacityBirds} ekor ayam. Proyeksi Net Profit: ${pkg.projectedNetProfitMonthly.displayRange}. Kontrak on-chain: ${contractCode}.`,
+      `Berhasil menyewa '${pkg.name}' (Lahan + Kandang) selama ${durationDays} hari seharga ${formatRupiah(totalCost)}. Kapasitas: ${pkg.capacityBirds} ekor ayam (~${productiveLayers} layer produktif). Kas Treasury Owner bertambah +${formatRupiah(totalCost)}. Sensor IoT (24°C / 65% RH) & produksi otomatis 24/7 resmi aktif! Proyeksi Net Profit: ${pkg.projectedNetProfitMonthly.displayRange}. Kontrak: ${contractCode}.`,
       'PURCHASE',
       true,
       totalCost,
@@ -1462,10 +1655,15 @@ export default function App() {
       let updated = { ...prev };
       switch (item.id) {
         case 'chick-pullet':
-          // Adds grower pullet
-          updated.population += 1;
-          updated.hens += 1;
-          updated.cohorts.growerPulletCount += 1;
+        case 'pullet-hyline-brown':
+        case 'pullet-lohmann-brown':
+        case 'pullet-isa-brown':
+        case 'pullet-hisex-brown':
+        case 'pullet-lokal-arab':
+          // Menambahkan ayam indukan produktif siap bertelur
+          updated.population += quantity;
+          updated.hens += quantity;
+          updated.cohorts.layerProductiveCount += quantity;
           break;
         case 'feed-concentrate':
           updated.feedStockKg += 10 * quantity;
@@ -1479,9 +1677,21 @@ export default function App() {
         case 'metaverse-land-plot':
           updated.landPlots += 1;
           break;
+        case 'coop-rental-small-50':
+        case 'coop-rental-medium-100':
+        case 'coop-rental-commercial-500':
+        case 'coop-rental-industrial-1000':
         case 'modern-coop-rental': {
           updated.modernCoopDaysRemaining += 30;
-          const targetCoop = METAVERSE_COOP_CATALOG.find((c) => c.id === 'kandang-standar') || METAVERSE_COOP_CATALOG[0];
+          const coopMapping: Record<string, string> = {
+            'coop-rental-small-50': 'kandang-skala-kecil-50',
+            'coop-rental-medium-100': 'kandang-standar',
+            'coop-rental-commercial-500': 'kandang-bertingkat-iot',
+            'coop-rental-industrial-1000': 'kandang-cyber-metaverse',
+            'modern-coop-rental': 'kandang-standar',
+          };
+          const targetCoopId = coopMapping[item.id] || 'kandang-standar';
+          const targetCoop = METAVERSE_COOP_CATALOG.find((c) => c.id === targetCoopId) || METAVERSE_COOP_CATALOG[0];
           const currentExp = (activeCoopRental && activeCoopRental.expiresAt > Date.now())
             ? activeCoopRental.expiresAt
             : Date.now();
@@ -1493,8 +1703,8 @@ export default function App() {
             rentedAt: Date.now(),
             expiresAt: currentExp + 30 * 86400 * 1000,
             durationDays: 30,
-            monthlyRentIdr: targetCoop.monthlyRentIdr,
-            contractCode: `COOP-STD-${Math.floor(1000 + Math.random() * 9000)}`,
+            monthlyRentIdr: item.price,
+            contractCode: `COOP-${targetCoop.capacityBirds}-${Math.floor(1000 + Math.random() * 9000)}`,
             txHash: '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
             capacityBirds: targetCoop.capacityBirds,
             iotTelemetry: {
@@ -1502,13 +1712,32 @@ export default function App() {
               targetTempC: updated.targetTempC,
               humidityRh: updated.humidityRh,
               targetHumidityRh: 65,
-              ammoniaPpm: 8.2,
+              ammoniaPpm: targetCoop.capacityBirds >= 1000 ? 5.2 : targetCoop.capacityBirds >= 500 ? 6.5 : 8.2,
               coolingPadActive: true,
-              exhaustFanRpm: 1200,
-              airVelocityMs: 1.8,
+              exhaustFanRpm: targetCoop.capacityBirds >= 1000 ? 1650 : targetCoop.capacityBirds >= 500 ? 1450 : 1200,
+              airVelocityMs: targetCoop.capacityBirds >= 1000 ? 2.8 : 2.2,
               lastSyncTime: 'Baru saja (Real-Time)',
-              sensorHealthPercent: 98,
+              sensorHealthPercent: 99,
             },
+          });
+
+          // Juga tambahkan unit kandang ke MultiCoop list jika belum ada unit skala tersebut
+          setCoops((prevCoops) => {
+            const newId = prevCoops.length + 1;
+            const newUnit: CoopUnit = {
+              id: newId,
+              name: `${targetCoop.name} #${newId}`,
+              capacity: targetCoop.capacityBirds,
+              status: 'Active',
+              chickenCount: Math.min(targetCoop.capacityBirds, Math.round(targetCoop.capacityBirds * 0.4)),
+              tier: targetCoop.tier,
+              dailyEggs: Math.floor(Math.round(targetCoop.capacityBirds * 0.4) * 0.88),
+              feedDailyKg: Math.round(Math.round(targetCoop.capacityBirds * 0.4) * 0.12),
+              tempC: 24.2,
+              humidityRh: 65,
+              ammoniaPpm: 6.8,
+            };
+            return [...prevCoops, newUnit];
           });
           break;
         }
@@ -1548,7 +1777,12 @@ export default function App() {
   ) => {
     if (balances.kasTreasuryOwner < amountIdr) {
       sounds.playError();
-      alert(`Saldo Kas Treasury Owner tidak mencukupi! Dibutuhkan ${formatRupiah(amountIdr)}, saldo kas saat ini ${formatRupiah(balances.kasTreasuryOwner)}.`);
+      addLedger(
+        'SALDO KAS TREASURY TIDAK CUKUP',
+        `Dibutuhkan ${formatRupiah(amountIdr)}, saldo kas saat ini ${formatRupiah(balances.kasTreasuryOwner)}.`,
+        'SYSTEM',
+        false
+      );
       return;
     }
 
@@ -1622,7 +1856,8 @@ export default function App() {
       if (autoCompoundConfig.isEnabled) {
         const cashPayout = Math.round((farmerNetShareIdr * autoCompoundConfig.cashPayoutPercent) / 100);
         const compoundAmount = farmerNetShareIdr - cashPayout;
-        const addedBirds = Math.floor((compoundAmount * 0.6) / 45000);
+        // Acuan harga pullet siap telur Rp 88.000 / ekor
+        const addedBirds = Math.floor((compoundAmount * 0.6) / 88000);
         const addedFeedKg = Math.floor((compoundAmount * 0.4) / 7000);
 
         setBalances((prev) => ({
@@ -1908,7 +2143,12 @@ export default function App() {
         return;
       }
       sounds.playError();
-      alert('Saldo tidak cukup untuk menyewa AC Conditioner! Silakan top-up terlebih dahulu.');
+      addLedger(
+        'SALDO TIDAK CUKUP',
+        'Saldo tidak cukup untuk menyewa AC Conditioner (Rp 65.000). Silakan top-up terlebih dahulu.',
+        'CLIMATE',
+        false
+      );
       setIsOpenTopUp(true);
       return;
     }
@@ -2007,6 +2247,10 @@ export default function App() {
         onOpenFarmerSwitcher={() => setIsOpenFarmerSwitcher(true)}
         onOpenMonetaryDirective={() => setIsOpenMonetaryDirectiveModal(true)}
         onOpenAboutModal={() => setIsOpenAboutModal(true)}
+        onOpenCertifications={() => {
+          setSelectedCertId(null);
+          setIsOpenCertificationModal(true);
+        }}
         onOpenAuthModal={() => setIsOpenAuthModal(true)}
         authUser={authUser}
         onSignOut={handleSignOut}
@@ -2063,6 +2307,12 @@ export default function App() {
         biosecurityHealth={cycle.biosecurityHealth}
         accumulatedEggs={cycle.accumulatedEggs}
         onOpenEtherscan={() => setIsOpenEtherscanConsole(true)}
+      />
+
+      {/* 5.5. MODUL GRAFIK PORTOFOLIO LIVE REAL-TIME (Chart.js + Tailwind CSS) */}
+      <LivePortfolioChart
+        initialTreasuryBalance={balances.kasTreasuryOwner}
+        initialEggCount={cycle.accumulatedEggs || 1480}
       />
 
       {/* 6. Biological Poultry Cycle Real-Time Simulator */}
@@ -2139,6 +2389,14 @@ export default function App() {
       <LiveLedger
         entries={ledger}
         onOpenEtherscanByHash={handleOpenEtherscanByHash}
+      />
+
+      {/* 8.5. SERTIFIKASI & LEGALITAS RESMI PLATFORM (NKV Kementan, Halal BPJPH, ISO 22000/9001, Audit Web3, PSE Kominfo) */}
+      <CertificationSection
+        onOpenModal={(cert) => {
+          setSelectedCertId(cert?.id || null);
+          setIsOpenCertificationModal(true);
+        }}
       />
 
       {/* TENTANG GAMEGRAFITY FARM & LANGKAH MUDAH UNTUK UNTUNG */}
@@ -2515,6 +2773,17 @@ export default function App() {
           if (el) el.scrollIntoView({ behavior: 'smooth' });
         }}
         onOpenTopUp={() => setIsOpenTopUp(true)}
+        onOpenCertifications={() => {
+          setSelectedCertId(null);
+          setIsOpenCertificationModal(true);
+        }}
+      />
+
+      {/* Dokumen Sertifikasi Resmi (NKV, Halal, ISO 22000/9001, Audit Web3, PSE Kominfo) Modal */}
+      <CertificationModal
+        isOpen={isOpenCertificationModal}
+        onClose={() => setIsOpenCertificationModal(false)}
+        selectedCertId={selectedCertId}
       />
 
       {/* Autentikasi Gmail / Google, Manual Form & Neon PostgreSQL farmers_users Modal */}

@@ -338,24 +338,32 @@ export function generateMerkleProofForBatch(params: {
 // Local persistent burner wallet helper
 const LOCAL_KEY_STORAGE = 'gamegrafity_sovereign_privkey';
 
-export function getOrCreateSovereignWallet(): { wallet: ethers.HDNodeWallet; isNew: boolean } {
+export function getOrCreateSovereignWallet(): { wallet: ethers.HDNodeWallet | ethers.Wallet; isNew: boolean } {
   try {
-    const savedKey = localStorage.getItem(LOCAL_KEY_STORAGE);
+    const savedKey = typeof localStorage !== 'undefined' ? localStorage.getItem(LOCAL_KEY_STORAGE) : null;
     if (savedKey && savedKey.startsWith('0x')) {
       const wallet = new ethers.Wallet(savedKey);
-      return { wallet: wallet as unknown as ethers.HDNodeWallet, isNew: false };
+      return { wallet, isNew: false };
     }
   } catch (e) {
     console.warn('LocalStorage error, creating memory wallet', e);
   }
 
-  const randomWallet = ethers.Wallet.createRandom();
   try {
-    localStorage.setItem(LOCAL_KEY_STORAGE, randomWallet.privateKey);
+    const randomWallet = ethers.Wallet.createRandom();
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(LOCAL_KEY_STORAGE, randomWallet.privateKey);
+      }
+    } catch {
+      // Ignore
+    }
+    return { wallet: randomWallet, isNew: true };
   } catch (e) {
-    // Ignore storage quota
+    console.warn('Wallet.createRandom error, falling back to deterministic wallet', e);
+    const fallbackWallet = new ethers.Wallet('0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d');
+    return { wallet: fallbackWallet, isNew: true };
   }
-  return { wallet: randomWallet, isNew: true };
 }
 
 // Generate realistic mock transaction hash and receipt with real ethers signatures and Merkle attestation

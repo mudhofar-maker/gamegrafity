@@ -109,7 +109,7 @@ export const PersonalFarmerDashboard: React.FC<PersonalFarmerDashboardProps> = (
     if (!file) return;
 
     if (file.size > 8 * 1024 * 1024) {
-      alert('Ukuran foto maksimal 8 MB.');
+      sounds.playError();
       return;
     }
 
@@ -168,14 +168,14 @@ export const PersonalFarmerDashboard: React.FC<PersonalFarmerDashboardProps> = (
       const data = await res.json();
       if (data.success) {
         sounds.playSuccess();
-        alert(`🎉 ${data.message}\nTxHash: ${data.txHash}`);
+        setOfftakeSuccessMessage(`Persetujuan Berhasil! TxHash: ${data.txHash}`);
         onRefresh();
       } else {
-        alert(`Gagal: ${data.message}`);
+        sounds.playError();
       }
     } catch (err) {
       console.error(err);
-      alert('Terjadi kesalahan saat mengonfirmasi persetujuan.');
+      sounds.playError();
     } finally {
       setIsApproving(false);
     }
@@ -184,7 +184,7 @@ export const PersonalFarmerDashboard: React.FC<PersonalFarmerDashboardProps> = (
   // Handle offtake harvest selling to broker
   const handleExecuteOfftake = async () => {
     if (offtakeEggsInput <= 0) {
-      alert('Masukkan jumlah telur panen yang ingin diserap oleh broker.');
+      sounds.playError();
       return;
     }
     setIsOfftaking(true);
@@ -206,11 +206,11 @@ export const PersonalFarmerDashboard: React.FC<PersonalFarmerDashboardProps> = (
         setOfftakeSuccessMessage(data.message);
         onRefresh();
       } else {
-        alert(`Gagal offtake: ${data.message}`);
+        sounds.playError();
       }
     } catch (err) {
       console.error(err);
-      alert('Terjadi kesalahan saat memproses penyerapan broker.');
+      sounds.playError();
     } finally {
       setIsOfftaking(false);
     }
@@ -908,8 +908,13 @@ export const PersonalFarmerDashboard: React.FC<PersonalFarmerDashboardProps> = (
                         </span>
                         <span
                           className="text-[10px] text-purple-400 truncate max-w-[90px] cursor-pointer hover:underline"
-                          title={record.txHash}
-                          onClick={() => alert(`On-Chain TxHash: ${record.txHash}`)}
+                          title="Klik untuk menyalin TxHash"
+                          onClick={() => {
+                            if (record.txHash) {
+                              navigator.clipboard?.writeText(record.txHash);
+                              sounds.playClick();
+                            }
+                          }}
                         >
                           {record.txHash ? record.txHash.slice(0, 8) + '...' : '-'}
                         </span>

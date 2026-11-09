@@ -78,13 +78,16 @@ export const FarmerAccountSwitcherModal: React.FC<FarmerAccountSwitcherModalProp
 
   if (!isOpen) return null;
 
+  const [registerErrorMsg, setRegisterErrorMsg] = useState<string | null>(null);
+
   // Handle Photo Select in Registration Form
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 8 * 1024 * 1024) {
-      alert('Ukuran foto maksimal 8 MB.');
+      sounds.playError();
+      setRegisterErrorMsg('Ukuran foto maksimal 8 MB.');
       return;
     }
 
@@ -98,8 +101,10 @@ export const FarmerAccountSwitcherModal: React.FC<FarmerAccountSwitcherModalProp
   // Submit new farmer registration
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setRegisterErrorMsg(null);
     if (!fullName || !phone) {
-      alert('Nama lengkap dan nomor telepon wajib diisi.');
+      sounds.playError();
+      setRegisterErrorMsg('Nama lengkap dan nomor telepon wajib diisi.');
       return;
     }
 
@@ -138,11 +143,13 @@ export const FarmerAccountSwitcherModal: React.FC<FarmerAccountSwitcherModalProp
           setRegisterSuccessMsg(null);
         }, 2200);
       } else {
-        alert(`Gagal: ${data.message}`);
+        sounds.playError();
+        setRegisterErrorMsg(`Gagal: ${data.message}`);
       }
     } catch (err) {
       console.error(err);
-      alert('Terjadi kesalahan saat mendaftarkan peternak.');
+      sounds.playError();
+      setRegisterErrorMsg('Terjadi kesalahan saat mendaftarkan peternak.');
     } finally {
       setIsSubmitting(false);
     }
@@ -158,15 +165,14 @@ export const FarmerAccountSwitcherModal: React.FC<FarmerAccountSwitcherModalProp
       const data = await res.json();
       if (data.success) {
         sounds.playSuccess();
-        alert(`🎉 Sukses! Akun ${name} telah disetujui Owner dan berstatus AKTIF.`);
         await fetchAccounts();
         onAccountsUpdated();
       } else {
-        alert(`Gagal: ${data.message}`);
+        sounds.playError();
       }
     } catch (err) {
       console.error(err);
-      alert('Terjadi kesalahan saat menyetujui akun.');
+      sounds.playError();
     }
   };
 

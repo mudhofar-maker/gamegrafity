@@ -237,7 +237,7 @@ export const PoultryLifecyclePipeline: React.FC<PoultryLifecyclePipelineProps> =
 
             <div>
               <h4 className="text-xs font-bold text-emerald-300">Indukan Bertelur Puncak</h4>
-              <p className="text-[10px] text-slate-400">Minggu 19 - 72 (Masa Emas)</p>
+              <p className="text-[10px] text-slate-400">Minggu 19 - 72/78 (Siklus 1 Tahun Penuh)</p>
             </div>
 
             <div className="bg-slate-900 p-2 rounded-lg space-y-1 text-[11px] font-mono">
@@ -246,14 +246,18 @@ export const PoultryLifecyclePipeline: React.FC<PoultryLifecyclePipelineProps> =
                 <span className="text-emerald-400 font-bold">{cohorts.layerProductiveCount} Ekor</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Produksi Harian:</span>
-                <span className="text-emerald-300 font-bold">~85-95% Lay Rate</span>
+                <span className="text-slate-400">Rata-Rata Lay Rate:</span>
+                <span className="text-emerald-300 font-bold">85% Hen-Day</span>
+              </div>
+              <div className="flex justify-between text-[10px] text-amber-300">
+                <span>Standar / 100 Ekor:</span>
+                <span className="font-bold">31.025 Butir (~1.939 Kg)</span>
               </div>
             </div>
 
             <div className="text-[10px] text-emerald-400/90 flex items-center gap-1 font-semibold">
               <TrendingUp className="w-3 h-3 text-emerald-400" />
-              <span>Sumber Utama Akumulasi Telur</span>
+              <span>Sumber Utama Akumulasi Telur Harian</span>
             </div>
           </div>
 
@@ -280,8 +284,8 @@ export const PoultryLifecyclePipeline: React.FC<PoultryLifecyclePipelineProps> =
             </div>
 
             <div>
-              <h4 className="text-xs font-bold text-white">Ayam Afkir Tua</h4>
-              <p className="text-[10px] text-slate-400">Minggu 73+ (Non-Produksi)</p>
+              <h4 className="text-xs font-bold text-white">Ayam Afkir (Ujung Siklus)</h4>
+              <p className="text-[10px] text-slate-400">Minggu 72–78 (Akhir Siklus 1 Tahun)</p>
             </div>
 
             <div className="bg-slate-900 p-2 rounded-lg space-y-1 text-[11px] font-mono">
@@ -291,14 +295,18 @@ export const PoultryLifecyclePipeline: React.FC<PoultryLifecyclePipelineProps> =
                   {cohorts.spentHensAfkirCount} Ekor
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Status Pakan:</span>
-                <span className="text-red-400 text-[10px]">Boros Pakan (-Cost)</span>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-slate-400">Harga Beli Broker:</span>
+                <span className="text-emerald-400 font-bold">Rp 35k – 45k/ekor</span>
+              </div>
+              <div className="flex justify-between text-[10px] text-slate-500">
+                <span>Acuan Timbangan:</span>
+                <span>Rp 15.000 / Kg</span>
               </div>
             </div>
 
             <div className="text-[10px] text-slate-400 leading-tight">
-              Produksi telur drop di bawah 30%. Harus segera dijual sebagai daging karkas untuk modal baru.
+              Di ujung siklus 1 tahun, seluruh ayam dijual ke broker/pengepul dan kondisi kandang menjadi kosong total (All-Out).
             </div>
           </div>
 
@@ -311,9 +319,9 @@ export const PoultryLifecyclePipeline: React.FC<PoultryLifecyclePipelineProps> =
                   sounds.playCash();
                   onSellSpentHens();
                 }}
-                className="w-full py-1.5 px-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-[10px] tracking-tight shadow-md flex items-center justify-center gap-1"
+                className="w-full py-1.5 px-2 rounded-lg bg-gradient-to-r from-amber-600 to-emerald-600 hover:from-amber-500 hover:to-emerald-500 text-slate-950 font-bold text-[10px] tracking-tight shadow-md flex items-center justify-center gap-1"
               >
-                <span>🍗 Jual Karkas (+{formatRupiah(cohorts.spentHensAfkirCount * 38000)})</span>
+                <span>🍗 Jual ke Broker (+{formatRupiah(cohorts.spentHensAfkirCount * 40000)})</span>
               </button>
             ) : (
               <div className="text-[10px] font-mono text-slate-500 text-center">
@@ -329,9 +337,9 @@ export const PoultryLifecyclePipeline: React.FC<PoultryLifecyclePipelineProps> =
         <div className="flex items-start gap-2">
           <span className="text-amber-400 font-bold font-mono text-sm">💡</span>
           <div>
-            <strong className="text-slate-200">Kapan Ayam Bertelur vs Non-Produksi?</strong>
+            <strong className="text-slate-200">Durasi Siklus Produktif 1 Tahun & Standar Produksi (per 100 Ekor):</strong>
             <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
-              Tahap 1 (Inkubasi 21 Hari), Tahap 2 (DOC 6 Minggu), dan Tahap 3 (Pullet 18 Minggu) adalah <strong>Non-Produksi</strong>. Ayam hanya bertelur aktif pada <strong>Tahap 4 (Minggu 19 - 72)</strong>. Pada Tahap 5 (Afkir), ayam berhenti bertelur dan wajib dijual ke pasar karkas.
+              Siklus bertelur berlangsung <strong>1 tahun (12 bulan penuh / 72–78 minggu usia ayam)</strong> dengan produktivitas rata-rata <strong>85%</strong>, menghasilkan <strong>31.025 butir telur (~1.939 kg) per 100 ekor</strong>. Di ujung siklus, seluruh ayam dibeli broker di kisaran <strong>Rp 35.000 – Rp 45.000 / ekor</strong> (atau <strong>Rp 15.000 / kg</strong> bobot hidup) dan <strong>kandang menjadi kosong total</strong>.
             </p>
           </div>
         </div>

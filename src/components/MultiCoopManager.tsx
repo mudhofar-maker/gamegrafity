@@ -44,6 +44,56 @@ export const MultiCoopManager: React.FC<MultiCoopManagerProps> = ({
 }) => {
   const [selectedFilter, setSelectedFilter] = useState<'ALL' | 'Active' | 'Hatching' | 'Full'>('ALL');
   const [isExpanding, setIsExpanding] = useState(false);
+  const [showScaleModal, setShowScaleModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // 4 Official Scales & Construction Cost Benchmarks
+  const EXPANSION_SCALES = [
+    {
+      id: 'scale-50',
+      title: 'Skala Kecil (50 Ekor)',
+      capacity: 50,
+      constructionCostRange: 'Rp 1.500.000 – Rp 3.000.000',
+      monthlyRentIdr: 250000,
+      tier: 'Modular Semi-Closed Mini',
+      initialBirds: 40,
+      badge: 'Hemat Capex (Pemula)',
+      description: 'Kandang modular mini ram kawat ganda. Menghemat biaya konstruksi fisik Rp 1.5M - 3M.',
+    },
+    {
+      id: 'scale-100',
+      title: 'Kapasitas Menengah (100 Ekor)',
+      capacity: 100,
+      constructionCostRange: 'Rp 3.500.000 – Rp 6.500.000',
+      monthlyRentIdr: 550000,
+      tier: 'Semi-Closed Standar Galvanis',
+      initialBirds: 85,
+      badge: 'Standar Pinsar',
+      description: 'Kandang standar semi-closed galvanis. Mengeliminasi modal konstruksi Rp 3.5M - 6.5M.',
+    },
+    {
+      id: 'scale-500',
+      title: 'Skala Komersial (500 Ekor)',
+      capacity: 500,
+      constructionCostRange: 'Rp 15.000.000 – Rp 25.000.000',
+      monthlyRentIdr: 1850000,
+      tier: 'Smart Multi-Tier Closed House',
+      initialBirds: 440,
+      badge: 'Best ROI LoRaWAN',
+      description: 'Closed house 3 tingkat galvanis LoRaWAN + evaporative pad. Bebas modal Rp 15M - 25M.',
+    },
+    {
+      id: 'scale-1000',
+      title: 'Skala Industri (1.000 Ekor)',
+      capacity: 1000,
+      constructionCostRange: 'Rp 35.000.000 – Rp 55.000.000',
+      monthlyRentIdr: 3500000,
+      tier: 'Hyper-Scale Mega Closed House',
+      initialBirds: 880,
+      badge: 'Hyper-Scale Mega',
+      description: 'Mega closed house AI microclimate HVAC & konveyor telur. Bebas modal Rp 35M - 55M.',
+    },
+  ];
 
   // Growth Journey Milestones (Requested: 10 -> 20 -> 40 -> 1000 -> 6000 ekor)
   const totalChickens = useMemo(
@@ -75,59 +125,58 @@ export const MultiCoopManager: React.FC<MultiCoopManagerProps> = ({
   const currentMilestoneIndex = milestones.findIndex((m) => totalChickens < m.target);
   const activeLevel = currentMilestoneIndex === -1 ? milestones.length - 1 : Math.max(0, currentMilestoneIndex);
 
-  // Expansion Cost: Rp 750.000 per new coop (Infrastructure + Feed + Hatchery setup)
-  const expansionCostIdr = 750000;
-
-  const handleExpandCoop = () => {
+  const handleSelectScaleToExpand = (scaleItem: typeof EXPANSION_SCALES[0]) => {
     if (coops.length >= 20) {
-      alert('Kapasitas maksimal 20 kandang telah tercapai!');
+      setErrorMessage('Kapasitas maksimal 20 unit kandang telah tercapai!');
       return;
     }
 
-    if (saldoDompetSaya < expansionCostIdr) {
+    if (saldoDompetSaya < scaleItem.monthlyRentIdr) {
       sounds.playError();
-      const kurang = expansionCostIdr - saldoDompetSaya;
-      alert(`Saldo dompet tidak mencukupi untuk membuka kandang baru! Dibutuhkan ${formatRupiah(expansionCostIdr)}, saldo saat ini ${formatRupiah(saldoDompetSaya)}. Kurang ${formatRupiah(kurang)}.`);
+      const kurang = scaleItem.monthlyRentIdr - saldoDompetSaya;
+      setErrorMessage(`Saldo dompet tidak cukup untuk ${scaleItem.title}! Butuh ${formatRupiah(scaleItem.monthlyRentIdr)}, kurang ${formatRupiah(kurang)}.`);
       onOpenTopUp();
       return;
     }
 
+    setErrorMessage(null);
     setIsExpanding(true);
     sounds.playDirectivePing();
 
     setTimeout(() => {
       setIsExpanding(false);
+      setShowScaleModal(false);
       const newId = coops.length + 1;
-      // Kapasitas bertahap sesuai skala: dari 150 hingga 500 ekor per kandang baru
-      const newCapacity = newId > 5 ? 500 : 300;
-      const initialBirds = Math.min(newCapacity, 150);
+      const initialBirds = scaleItem.initialBirds;
 
       const newUnit: CoopUnit = {
         id: newId,
-        name: `Kandang Sovereign #${newId}`,
-        capacity: newCapacity,
-        status: initialBirds >= newCapacity ? 'Full' : 'Active',
+        name: `${scaleItem.title} #${newId}`,
+        capacity: scaleItem.capacity,
+        status: initialBirds >= scaleItem.capacity ? 'Full' : 'Active',
         chickenCount: initialBirds,
-        tier: newId > 5 ? 'Mega-House Closed' : 'Pro IoT Multi-Tier',
+        tier: scaleItem.tier,
         dailyEggs: Math.floor(initialBirds * 0.88),
         feedDailyKg: Math.round(initialBirds * 0.12),
         tempC: 24.0,
         humidityRh: 65,
-        ammoniaPpm: 6.8,
+        ammoniaPpm: scaleItem.capacity >= 1000 ? 5.2 : scaleItem.capacity >= 500 ? 6.5 : 7.8,
       };
 
-      onAddCoop(newUnit, expansionCostIdr);
+      onAddCoop(newUnit, scaleItem.monthlyRentIdr);
       sounds.playCash();
 
       // Trigger celebratory confetti if crossing major milestones
       if (totalChickens + initialBirds >= 1000 || totalChickens + initialBirds >= 6000) {
-        confetti({
-          particleCount: 100,
-          spread: 100,
-          origin: { y: 0.5 },
-        });
+        try {
+          confetti({
+            particleCount: 100,
+            spread: 100,
+            origin: { y: 0.5 },
+          });
+        } catch (_) {}
       }
-    }, 600);
+    }, 500);
   };
 
   const filteredCoops = coops.filter((c) => {
@@ -137,6 +186,90 @@ export const MultiCoopManager: React.FC<MultiCoopManagerProps> = ({
 
   return (
     <div id="multi-coop-manager-section" className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6 text-slate-200">
+      {/* Scale Expansion Selector Modal */}
+      {showScaleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div>
+                <h4 className="text-base font-bold text-white flex items-center gap-2">
+                  <Home className="w-5 h-5 text-cyan-400" />
+                  Pilih Skala Kandang yang Ingin Dibuka
+                </h4>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Bebas beban modal konstruksi fisik dengan sistem sewa utility bulanan langsung ke Kas Owner
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowScaleModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {errorMessage && (
+              <div className="p-3 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {EXPANSION_SCALES.map((scale) => {
+                const isAffordable = saldoDompetSaya >= scale.monthlyRentIdr;
+                return (
+                  <div
+                    key={scale.id}
+                    className="p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 transition flex flex-col justify-between space-y-3"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="font-bold text-white text-sm">{scale.title}</span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                          {scale.badge}
+                        </span>
+                      </div>
+                      <div className="text-[11px] font-mono text-cyan-400 mt-0.5">{scale.tier}</div>
+                      
+                      <div className="mt-2 p-2 bg-slate-900/80 rounded-lg space-y-1 text-[11px]">
+                        <div className="flex justify-between text-slate-400">
+                          <span>Acuan Konstruksi Fisik:</span>
+                          <span className="text-amber-300 font-mono font-semibold">{scale.constructionCostRange}</span>
+                        </div>
+                        <div className="flex justify-between text-slate-400">
+                          <span>Sewa Utility Bulanan:</span>
+                          <span className="text-emerald-400 font-mono font-bold">{formatRupiah(scale.monthlyRentIdr)} / bln</span>
+                        </div>
+                      </div>
+
+                      <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
+                        {scale.description}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectScaleToExpand(scale)}
+                      disabled={isExpanding}
+                      className={`w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition ${
+                        isAffordable
+                          ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white shadow-md'
+                          : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30'
+                      }`}
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>{isAffordable ? `Buka Unit (${formatRupiah(scale.monthlyRentIdr)})` : `Top Up (${formatRupiah(scale.monthlyRentIdr)})`}</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 1. Header & Summary Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-800">
         <div className="space-y-1">
@@ -162,14 +295,18 @@ export const MultiCoopManager: React.FC<MultiCoopManagerProps> = ({
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={handleExpandCoop}
+            onClick={() => {
+              setErrorMessage(null);
+              setShowScaleModal(true);
+              sounds.playClick();
+            }}
             disabled={isExpanding || coops.length >= 20}
             className="group relative px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs tracking-wide shadow-lg shadow-purple-950/50 flex items-center gap-2 transition active:scale-95 disabled:opacity-50 border border-purple-400/30"
           >
             <span className="text-base group-hover:scale-110 transition">🏗️</span>
-            <span>{isExpanding ? 'Memproses Ekspansi...' : 'Buka Kandang Baru (Rp 750k)'}</span>
+            <span>{isExpanding ? 'Memproses Ekspansi...' : 'Buka Kandang Baru (4 Skala)'}</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/40 text-purple-200 font-mono">
-              +{expansionCostIdr / 1000}k Kas Owner
+              Sewa Utility / Bln
             </span>
           </button>
         </div>

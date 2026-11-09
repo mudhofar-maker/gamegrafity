@@ -84,16 +84,16 @@ export function calculateEmergencyDirective(
 
   // 5. HIGH: Spent hens (Ayam Afkir Tua) eating expensive feed without producing eggs
   if (cohorts.spentHensAfkirCount > 0) {
-    const afkirValue = cohorts.spentHensAfkirCount * 38000;
+    const afkirValue = cohorts.spentHensAfkirCount * 40000; // Acuan broker Rp 35.000 – Rp 45.000 / ekor (atau Rp 15.000/kg)
     return {
       urgencyLevel: 'HIGH',
       title: '🍗 EFISIENSI KANDANG: Ada Ayam Afkir Tua Non-Produksi!',
-      directiveText: `➔ TINDAKAN UTAMA: Jual ${cohorts.spentHensAfkirCount} Ekor Ayam Afkir ke Pasar Daging Karkas!`,
-      explanation: `Ayam afkir (>72 minggu) tidak lagi bertelur tetapi menghabiskan pakan porsi penuh setiap hari. Segera cairkan menjadi uang tunai!`,
+      directiveText: `➔ TINDAKAN UTAMA: Jual ${cohorts.spentHensAfkirCount} Ekor Ayam Afkir ke Broker / Pengepul!`,
+      explanation: `Ayam afkir (>72–78 minggu) tidak lagi produktif dan menghabiskan pakan. Segera jual ke broker (acuan Rp 35k–45k/ekor atau Rp 15.000/kg) agar kandang efisien!`,
       actionType: 'SELL_SPENT_HENS',
-      actionLabel: `Jual Ayam Afkir (+${formatRupiah(afkirValue)})`,
+      actionLabel: `Jual ke Broker (+${formatRupiah(afkirValue)})`,
       highlightTarget: 'btn-sell-afkir',
-      financialImpact: `Pemasukan Tunai: +${formatRupiah(afkirValue)}`,
+      financialImpact: `Pemasukan Tunai Broker: +${formatRupiah(afkirValue)}`,
     };
   }
 
