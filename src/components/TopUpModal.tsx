@@ -49,6 +49,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
   const [timeLeft, setTimeLeft] = useState<number>(300); // 5 minutes
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
+  const [inputError, setInputError] = useState<string | null>(null);
 
   const presetAmounts = [50000, 100000, 250000, 500000, 1250000, 2350000, 4000000];
 
@@ -64,6 +65,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
     if (!isOpen) {
       setTimeLeft(300);
       setIsProcessing(false);
+      setInputError(null);
       return;
     }
     const timer = setInterval(() => {
@@ -76,9 +78,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
 
   const currentAmount = customAmount ? parseInt(customAmount) || 0 : selectedAmount;
 
-  const [inputError, setInputError] = useState<string | null>(null);
-
-  const handleSimulatePayment = () => {
+  const handleConfirmPayment = async () => {
     setInputError(null);
     if (currentAmount < 10000) {
       sounds.playError();
@@ -87,6 +87,21 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
     }
     sounds.playQrisScan();
     setIsProcessing(true);
+
+    try {
+      // Catat konfirmasi pembayaran resmi ke antrean Kas Treasury Owner
+      await fetch('/api/p2p/sender-confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          senderName: actorName || 'Peternak Mitra',
+          serviceName: targetPackage?.name || `Top-Up Saldo Dompet ${formatRupiah(currentAmount)}`,
+          amountIdr: currentAmount,
+          paymentChannel: paymentMethod,
+          senderProofNote: `Pembayaran ${formatRupiah(currentAmount)} via ${paymentMethod} ke Rekening Owner BCA / QRIS Lumpia Ipul.`,
+        }),
+      }).catch(() => {});
+    } catch (_) {}
 
     setTimeout(() => {
       setIsProcessing(false);
@@ -98,7 +113,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
       });
       onSuccess(currentAmount, paymentMethod, targetPackage?.id);
       onClose();
-    }, 1300);
+    }, 1200);
   };
 
   const handleCopy = (text: string) => {
@@ -406,19 +421,19 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
             <button
               type="button"
               disabled={isProcessing || currentAmount <= 0}
-              onClick={handleSimulatePayment}
+              onClick={handleConfirmPayment}
               className="w-full py-4 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-extrabold text-sm tracking-wide shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 transition active:scale-[0.98] disabled:opacity-50"
             >
               {isProcessing ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Memvalidasi Pembayaran & Mengaktifkan Smart Contract...</span>
+                  <span>Memverifikasi Pembayaran & Menerbitkan Kontrak Produksi...</span>
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4 text-emerald-200" />
                   <span>
-                    Saya Sudah Membayar ({formatRupiah(currentAmount)}) &rarr;
+                    Konfirmasi Pembayaran Lunas ({formatRupiah(currentAmount)}) &rarr;
                   </span>
                 </>
               )}

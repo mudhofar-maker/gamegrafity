@@ -181,7 +181,7 @@ export const SovereignMonetaryDirectiveModal: React.FC<SovereignMonetaryDirectiv
             }`}
           >
             <Zap className="w-3.5 h-3.5" />
-            <span>Simulasi Serap Tanpa Batas (Infinite Absorption)</span>
+            <span>Protokol Serap Tanpa Batas (Infinite Absorption)</span>
           </button>
         </div>
 

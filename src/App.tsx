@@ -58,6 +58,7 @@ import { FarmerAccountSwitcherModal } from './components/FarmerAccountSwitcherMo
 import { SovereignMonetaryDirectiveModal } from './components/SovereignMonetaryDirectiveModal';
 import { AboutGamegrafityModal } from './components/AboutGamegrafityModal';
 import { AuthModal, AuthUser } from './components/AuthModal';
+import { SovereignAdminOfficeModal } from './components/SovereignAdminOfficeModal';
 import { LivePortfolioChart } from './components/LivePortfolioChart';
 import { CertificationSection } from './components/CertificationSection';
 import { CertificationModal } from './components/CertificationModal';
@@ -256,12 +257,16 @@ export default function App() {
   
   // Neon PostgreSQL farmers_users Auth State
   const [isOpenAuthModal, setIsOpenAuthModal] = useState<boolean>(false);
+
+  // Sovereign Owner & Admin Office Secret State (Unlocked by 5x rapid tap on 🐔 logo)
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState<boolean>(false);
+  const [isOpenAdminOffice, setIsOpenAdminOffice] = useState<boolean>(false);
   const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
     try {
       const saved = localStorage.getItem('gamegrafity_auth_user');
       return saved ? JSON.parse(saved) : {
         id: 1,
-        google_email: 'uangnyagoparbanyak@gmail.com',
+        google_email: 'owner@gamegrafity.farm',
         full_name: 'Mudhofar (Founder & Sovereign Owner)',
         signup_date: new Date(Date.now() - 86400000 * 14).toISOString(),
         last_sign_in: new Date().toISOString(),
@@ -2258,6 +2263,17 @@ export default function App() {
         farmerCountryFlag={farmerCountry.flag}
         farmerCountryName={farmerCountry.name}
         farmerFlockSize={farmerCountry.flockSize}
+        isAdminUnlocked={isAdminUnlocked}
+        onOpenAdminOffice={() => {
+          setIsAdminUnlocked(true);
+          setIsOpenAdminOffice(true);
+        }}
+        onLockAdminMode={() => {
+          setIsAdminUnlocked(false);
+          setIsOpenAdminOffice(false);
+          sounds.playClick();
+        }}
+        accumulatedEggs={cycle.accumulatedEggs}
       />
 
       {/* 1.5. DASBOR PERSONAL PETERNAK & MANAJEMEN PENGGUNA MANDIRI */}
@@ -2344,7 +2360,7 @@ export default function App() {
         onOpenTopUp={() => setIsOpenTopUp(true)}
       />
 
-      {/* 8. KANDANG METAVERSE & SEWA INFRASTRUKTUR (Katalog Paket Bundling, Simulasi Net Profit, Sewa, IoT & Countdown) */}
+      {/* 8. KANDANG METAVERSE & SEWA INFRASTRUKTUR (Katalog Paket Bundling, Kalkulator Net Profit, Sewa, IoT & Countdown) */}
       <MetaverseCoopRental
         saldoDompetSaya={balances.saldoDompetSaya}
         kasTreasuryOwner={balances.kasTreasuryOwner}
@@ -2794,6 +2810,41 @@ export default function App() {
         currentUser={authUser}
         onAuthSuccess={handleAuthSuccess}
         onSignOut={handleSignOut}
+      />
+
+      {/* Secret Sovereign Owner & Admin Office Modal (Unlocked via 5x rapid tap on 🐔 logo) */}
+      <SovereignAdminOfficeModal
+        isOpen={isOpenAdminOffice}
+        onClose={() => setIsOpenAdminOffice(false)}
+        balances={balances}
+        activeCurrency={activeCurrency}
+        twoWayPendingCount={twoWayPendingCount}
+        farmer={farmer}
+        onOpenOwnerTreasury={() => {
+          setIsOpenAdminOffice(false);
+          setIsOpenOwnerTreasuryModal(true);
+        }}
+        onOpenTwoWayApproval={() => {
+          setIsOpenAdminOffice(false);
+          setIsOpenTwoWayModal(true);
+        }}
+        onOpenFarmerSwitcher={() => {
+          setIsOpenAdminOffice(false);
+          setIsOpenFarmerSwitcher(true);
+        }}
+        onOpenAuthDatabase={() => {
+          setIsOpenAdminOffice(false);
+          setIsOpenAuthModal(true);
+        }}
+        onOpenMonetaryDirective={() => {
+          setIsOpenAdminOffice(false);
+          setIsOpenMonetaryDirectiveModal(true);
+        }}
+        onLockToPublic={() => {
+          setIsAdminUnlocked(false);
+          setIsOpenAdminOffice(false);
+          sounds.playClick();
+        }}
       />
     </div>
   );

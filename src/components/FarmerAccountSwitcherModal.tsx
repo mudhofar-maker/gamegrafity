@@ -51,6 +51,7 @@ export const FarmerAccountSwitcherModal: React.FC<FarmerAccountSwitcherModalProp
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registerSuccessMsg, setRegisterSuccessMsg] = useState<string | null>(null);
+  const [registerErrorMsg, setRegisterErrorMsg] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -77,8 +78,6 @@ export const FarmerAccountSwitcherModal: React.FC<FarmerAccountSwitcherModalProp
   }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const [registerErrorMsg, setRegisterErrorMsg] = useState<string | null>(null);
 
   // Handle Photo Select in Registration Form
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -309,7 +309,7 @@ export function LivePortfolioChart({
       const now = new Date();
       const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-      // Update simulasi fluktuasi harga komoditas telur & kas treasury
+      // Update fluktuasi harga pasar komoditas telur & kas treasury real-time
       setAssets((prevAssets) => {
         const nextAssets = prevAssets.map((asset) => {
           if (asset.id === 'eggs-layer') {

@@ -177,47 +177,12 @@ export const EmergencyAlertBanner: React.FC<EmergencyAlertBannerProps> = ({
             </span>
           </div>
 
-          {/* Sandbox Scenarios for testing real poultry crises */}
+          {/* Proteksi Otomasi Biosekuriti Aktif */}
           <div className="flex items-center gap-1.5 pt-1 sm:pt-0">
-            <span className="text-slate-500 text-[10px]">Tes Simulasi Krisis:</span>
-            <button
-              type="button"
-              onClick={onTriggerVirusSimulation}
-              className={`px-2 py-0.5 rounded text-[10px] font-mono transition border ${
-                hasSickChicks
-                  ? 'bg-red-500/20 text-red-300 border-red-500/40'
-                  : 'bg-slate-800 text-slate-400 hover:text-white border-slate-700'
-              }`}
-              title="Munculkan gejala virus pada anak ayam untuk menguji salvage junkfood"
-            >
-              🦠 Virus Anak Ayam
-            </button>
-            <button
-              type="button"
-              onClick={onTriggerFeedOutageSimulation}
-              className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-400 hover:text-white border border-slate-700 transition"
-              title="Turunkan pakan ke 0 kg untuk memicu alarm darurat pakan"
-            >
-              🌾 Pakan Habis
-            </button>
-            <button
-              type="button"
-              onClick={onTriggerSpentHensSimulation}
-              className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-400 hover:text-white border border-slate-700 transition"
-              title="Munculkan ayam afkir tua siap karkas"
-            >
-              🍗 Ayam Afkir
-            </button>
-            {onTriggerHeatStressSimulation && (
-              <button
-                type="button"
-                onClick={onTriggerHeatStressSimulation}
-                className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-400 hover:text-white border border-slate-700 transition"
-                title="Simulasi suhu panas 31.5°C untuk memicu heatstress"
-              >
-                🌡️ Panas 31°C
-              </button>
-            )}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Sistem Otomasi Aktif (Produksi Berjalan)
+            </span>
           </div>
         </div>
       </div>

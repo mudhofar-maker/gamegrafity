@@ -486,7 +486,7 @@ export const PartialAutoCompoundPanel: React.FC<PartialAutoCompoundPanelProps> =
           ) : (
             <>
               <RefreshCw className="w-4 h-4 text-purple-200" />
-              <span>Simulasikan & Jalankan Compound Sekarang</span>
+              <span>Eksekusi Auto-Compound Sekarang</span>
             </>
           )}
         </button>

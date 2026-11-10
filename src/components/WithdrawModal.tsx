@@ -59,6 +59,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
   const [customEthRecipient, setCustomEthRecipient] = useState<string>('');
   const [web3Step, setWeb3Step] = useState<'IDLE' | 'SIGNING' | 'MINING' | 'CONFIRMED'>('IDLE');
   const [latestWeb3Receipt, setLatestWeb3Receipt] = useState<Web3TransactionReceipt | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -68,8 +69,6 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
   const calculatedEthFromEggs = gramasiCalc.farmerGrossRevenue / IDR_PER_ETH;
 
   const effectiveIdrPayout = withdrawSource === 'EGGS' ? calculatedIdrFromEggs : walletAmountIdr;
-
-  const [formError, setFormError] = useState<string | null>(null);
 
   // Handle DANA P2P or Local Bank Payout
   const handleExecuteP2P = async () => {

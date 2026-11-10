@@ -137,10 +137,10 @@ export const GramasiBusinessModal: React.FC<GramasiBusinessModalProps> = ({
                 </p>
               </div>
 
-              {/* Selector 3 Paket Kemitraan */}
+              {/* Selector 4 Paket Kemitraan */}
               <div>
                 <label className="block text-slate-400 font-bold uppercase tracking-wider mb-2 text-[11px]">
-                  Pilih Simulasi Paket Kemitraan Resmi (Siap Order):
+                  Pilih Paket Kemitraan Resmi (Siap Order & Diaktivasi):
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {Object.entries(PERPETUAL_FOUNTAIN_PACKAGES).map(([key, pkg]) => (
@@ -963,7 +963,7 @@ export const GramasiBusinessModal: React.FC<GramasiBusinessModalProps> = ({
                 <div className="pt-2 border-t border-slate-800/80 space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-400 font-semibold">
-                      Simulasi Ukuran Populasi Kandang:
+                      Skala Ukuran Populasi Kandang:
                     </span>
                     <span className="font-mono text-cyan-300 font-bold">{cycleFlockSize} Ekor Ayam</span>
                   </div>

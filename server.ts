@@ -1178,22 +1178,6 @@ async function startServer() {
       createdAt: new Date(Date.now() - 3600000 * 3.5).toISOString(),
       txHash: '0x3a91f82c0b4e5d6a7f8e9c0b1a2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d',
       contractCode: 'COOP-IOT-TIER1-8910'
-    },
-    {
-      id: 'PAY-QRIS-9421',
-      senderName: 'Peternak Pemula Mandiri',
-      senderWalletOrPhone: '0857-1122-8901',
-      serviceName: 'Paket Starter Node (150 Ekor)',
-      amountIdr: 1250000,
-      paymentChannel: 'QRIS',
-      merchantTarget: 'LUMPIA IPUL (NMID: ID1026601649688)',
-      senderStatus: 'SUDAH_BAYAR',
-      senderConfirmedAt: new Date(Date.now() - 600000).toISOString(),
-      senderProofNote: 'Scan QRIS Lumpia Ipul sukses via DANA. Mohon approve modul produksi kandang starter.',
-      receiverStatus: 'PENDING_APPROVAL',
-      unlockedModule: 'Kandang Starter Node (150 Ekor) & Sensor NTC Suhu/RH',
-      createdAt: new Date(Date.now() - 900000).toISOString(),
-      contractCode: 'COOP-STARTER-9421'
     }
   ];
 
@@ -1605,61 +1589,10 @@ async function startServer() {
       ]
     },
     {
-      id: 'farmer-siti',
-      fullName: 'Siti Rahmawati',
-      username: 'sitirahma',
-      email: 'siti.rahma@gamegrafity.id',
-      phone: '0857-1122-8901',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      location: 'Kediri, Jawa Timur',
-      walletAddress: '0x3F5c9E2B1A8D4F7C6E0B3a5d8f2c1E4a7B0D9E3F',
-      role: 'peternak',
-      registeredAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-      status: 'PENDING_APPROVAL',
-      rentalPackage: {
-        id: 'pkg-starter-node',
-        name: 'Paket Starter Node',
-        tierLevel: 'starter',
-        monthlyCostIdr: 1250000,
-        capacityBirds: 150,
-        requestedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-        paymentProofNote: 'Sudah transfer scan QRIS Lumpia Ipul Rp 1.250.000 via BCA Mobile',
-        paymentChannel: 'QRIS',
-        contractCode: 'COOP-STARTER-9421'
-      },
-      liveProduction: {
-        population: 150,
-        roosters: 8,
-        hens: 142,
-        dailyEggsExpected: 132,
-        dailyFeedKg: 16.5,
-        dailyProductionRunningEggs: 0,
-        accumulatedEggsReady: 0,
-        totalHarvestedAllTime: 0,
-        totalGramasiKgAllTime: 0,
-        totalEarningsIdr: 0,
-        walletBalanceIdr: 0,
-        iotSensor: {
-          tempC: 24.0,
-          humidityRh: 65,
-          ammoniaPpm: 5.5,
-          exhaustRpm: 1200,
-          coolingPadActive: false
-        },
-        cohorts: {
-          docCount: 20,
-          pulletCount: 10,
-          layerCount: 110,
-          afkirCount: 10
-        }
-      },
-      brokerAbsorptions: []
-    },
-    {
       id: 'farmer-mudhofar',
       fullName: 'Mudhofar (Owner/Pengelola)',
       username: 'mudhofar',
-      email: 'uangnyagoparbanyak@gmail.com',
+      email: 'owner@gamegrafity.farm',
       phone: '0812-3344-5566',
       avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
       location: 'Sovereign Genesis Central',

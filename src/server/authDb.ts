@@ -19,7 +19,7 @@ class AuthDatabase {
   private inMemoryUsers: FarmerUserRecord[] = [
     {
       id: 1,
-      google_email: 'uangnyagoparbanyak@gmail.com',
+      google_email: 'owner@gamegrafity.farm',
       full_name: 'Mudhofar (Founder & Sovereign Owner)',
       password_hash: 'sovereign2026',
       signup_date: new Date(Date.now() - 86400000 * 14).toISOString(),
@@ -121,7 +121,7 @@ class AuthDatabase {
         const check = await client.query('SELECT COUNT(*) FROM farmers_users');
         if (parseInt(check.rows[0].count, 10) === 0) {
           const cols = ['google_email', 'full_name'];
-          const vals: any[] = ['uangnyagoparbanyak@gmail.com', 'Mudhofar (Founder & Sovereign Owner)'];
+          const vals: any[] = ['owner@gamegrafity.farm', 'Mudhofar (Founder & Sovereign Owner)'];
 
           if (this.hasColumn('password_hash')) {
             cols.push('password_hash');

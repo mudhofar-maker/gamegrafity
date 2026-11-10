@@ -96,8 +96,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setErrorMessage('');
     setSuccessMessage('');
 
-    const targetEmail = customEmail || email || 'uangnyagoparbanyak@gmail.com';
-    const targetName = customName || fullName || (targetEmail.includes('uangnyagopar') ? 'Mudhofar (Owner)' : 'Peternak Gamegrafity');
+    const targetEmail = customEmail || email;
+    if (!targetEmail) {
+      setLoading(false);
+      setErrorMessage('Silakan isi alamat email Anda pada kolom formulir di bawah.');
+      return;
+    }
+    const targetName = customName || fullName || targetEmail.split('@')[0];
 
     try {
       const res = await fetch('/api/auth/google', {
@@ -367,7 +372,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div className="space-y-2">
                 <button
                   type="button"
-                  onClick={() => handleGoogleAuth('uangnyagoparbanyak@gmail.com', 'Mudhofar')}
+                  onClick={() => {
+                    if (email) {
+                      handleGoogleAuth(email, fullName);
+                    } else {
+                      sounds.playClick();
+                      setErrorMessage('Silakan ketik alamat email Google (Gmail) Anda pada kolom di bawah.');
+                    }
+                  }}
                   disabled={loading}
                   className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center gap-2.5 shadow-lg shadow-white/5 transition border border-slate-200"
                 >
@@ -396,7 +408,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </button>
                 <div className="text-center">
                   <span className="text-[10px] text-slate-400 font-mono">
-                    Akun Cepat Terdaftar: <strong className="text-cyan-300">uangnyagoparbanyak@gmail.com</strong>
+                    Layanan Publik Mandiri • Registrasi Akun Peternak Terisolasi &amp; Terenkripsi
                   </span>
                 </div>
               </div>
@@ -580,18 +592,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {/* Collapsible Table Row Viewer */}
             {showDbViewer && (
               <div className="mt-2 p-2 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5 max-h-36 overflow-y-auto font-mono text-[10px]">
-                {userList.map((u, idx) => (
-                  <div key={idx} className="p-1.5 rounded-lg bg-slate-950 border border-slate-800/80 flex items-center justify-between">
-                    <div>
-                      <span className="text-white font-bold">{u.full_name}</span>
-                      <span className="text-slate-400 block text-[9px]">{u.google_email}</span>
+                {userList.map((u, idx) => {
+                  const maskedEmail = u.google_email
+                    ? u.google_email.replace(/^(.{2})(.*)(@.*)$/, (_, a, _b, c) => `${a}***${c}`)
+                    : '-';
+                  return (
+                    <div key={idx} className="p-1.5 rounded-lg bg-slate-950 border border-slate-800/80 flex items-center justify-between">
+                      <div>
+                        <span className="text-white font-bold">{u.full_name}</span>
+                        <span className="text-slate-400 block text-[9px]">{maskedEmail}</span>
+                      </div>
+                      <div className="text-right text-[9px]">
+                        <span className="text-emerald-400 block">In: {u.last_sign_in ? new Date(u.last_sign_in).toLocaleTimeString('id-ID') : '-'}</span>
+                        <span className="text-amber-400 block">Out: {u.last_sign_out ? new Date(u.last_sign_out).toLocaleTimeString('id-ID') : '-'}</span>
+                      </div>
                     </div>
-                    <div className="text-right text-[9px]">
-                      <span className="text-emerald-400 block">In: {u.last_sign_in ? new Date(u.last_sign_in).toLocaleTimeString('id-ID') : '-'}</span>
-                      <span className="text-amber-400 block">Out: {u.last_sign_out ? new Date(u.last_sign_out).toLocaleTimeString('id-ID') : '-'}</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

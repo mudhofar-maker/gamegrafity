@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import confetti from 'canvas-confetti';
 import { FarmerIdentity, FarmBalances } from '../types/farm';
 import { formatRupiah, formatEth, shortenAddress } from '../utils/formatters';
 import { sounds } from '../utils/soundEffects';
@@ -77,6 +78,10 @@ interface SovereignIdentityHeaderProps {
   authUser?: any;
   onSignOut?: () => void;
   onOpenCertifications?: () => void;
+  isAdminUnlocked?: boolean;
+  onOpenAdminOffice?: () => void;
+  onLockAdminMode?: () => void;
+  accumulatedEggs?: number;
 }
 
 export const SovereignIdentityHeader: React.FC<SovereignIdentityHeaderProps> = ({
@@ -123,18 +128,62 @@ export const SovereignIdentityHeader: React.FC<SovereignIdentityHeaderProps> = (
   farmerCountryFlag = '🇮🇩',
   farmerCountryName = 'Indonesia (Genesis Hub)',
   farmerFlockSize = 40,
+  isAdminUnlocked = false,
+  onOpenAdminOffice,
+  onLockAdminMode,
+  accumulatedEggs = 120,
 }) => {
   const isSovereign = farmer.mode === 'sovereign' || farmer.isSmartContractActive;
   const t = TRANSLATIONS[lang] || TRANSLATIONS.id;
+
+  // Secret Easter Egg: 5 rapid taps on 🐔 logo within 2.5s unlocks Sovereign Owner Office
+  const [tapTimestamps, setTapTimestamps] = useState<number[]>([]);
+  const [tapFeedbackCount, setTapFeedbackCount] = useState<number>(0);
+
+  const handleChickenTap = () => {
+    const now = Date.now();
+    const recent = [...tapTimestamps, now].filter((time) => now - time <= 2500);
+    setTapTimestamps(recent);
+    setTapFeedbackCount(recent.length);
+
+    sounds.playClick();
+
+    if (recent.length >= 5) {
+      setTapTimestamps([]);
+      setTapFeedbackCount(0);
+      sounds.playWeb3Success();
+      try {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.25 },
+        });
+      } catch (_) {}
+      if (onOpenAdminOffice) {
+        onOpenAdminOffice();
+      }
+    }
+  };
 
   return (
     <div className="space-y-4">
       {/* Brand & Top Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-cyan-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-emerald-950/40 border border-emerald-400/30">
-            🐔
-          </div>
+          {/* Interactive Chicken Logo with 5x Rapid Tap Secret Trigger */}
+          <button
+            type="button"
+            onClick={handleChickenTap}
+            className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-cyan-500 hover:scale-105 active:scale-95 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-emerald-950/40 border border-emerald-400/30 transition relative cursor-pointer select-none"
+            title="Gamegrafity Sovereign Hub"
+          >
+            <span>🐔</span>
+            {tapFeedbackCount >= 2 && tapFeedbackCount < 5 && (
+              <span className="absolute -top-2 -right-2 px-1.5 py-0.2 rounded-full bg-amber-500 text-black font-mono font-bold text-[9px] animate-bounce shadow">
+                {tapFeedbackCount}/5
+              </span>
+            )}
+          </button>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-extrabold text-white tracking-wide">
@@ -642,49 +691,138 @@ export const SovereignIdentityHeader: React.FC<SovereignIdentityHeaderProps> = (
         </div>
       </div>
 
-      {/* Main Balances & Quick CTAs Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Kas Treasury Owner Card */}
-        <div className="bg-gradient-to-br from-amber-950/30 via-slate-900 to-slate-950 border border-amber-500/30 rounded-2xl p-5 shadow-xl relative overflow-hidden">
-          <div className="flex items-center justify-between text-xs text-amber-400/90 mb-1">
-            <span className="font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-              <Lock className="w-3.5 h-3.5 text-amber-400" />
-              {t.ownerKas}
-            </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-              Protocol Reserve
-            </span>
-          </div>
-
-          <div className="text-3xl font-extrabold font-mono text-amber-300 tracking-tight mt-1">
-            {formatCustomCurrency(balances.kasTreasuryOwner, activeCurrency)}
-          </div>
-          {activeCurrency !== 'IDR' && (
-            <div className="text-xs font-mono text-slate-400 mt-0.5">
-              ≈ {formatRupiah(balances.kasTreasuryOwner)}
+      {/* Admin Mode Unlocked Active Banner */}
+      {isAdminUnlocked && (
+        <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-950/60 via-slate-900 to-amber-950/60 border border-amber-500/40 flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg shadow-amber-950/30">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">👑</span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-white">Sovereign Owner Office Terbuka</span>
+                <span className="text-[10px] font-mono px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold uppercase">
+                  Privat
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-300">
+                Akses penuh Kas Treasury, approval transfer peternak, dan database.
+              </span>
             </div>
-          )}
+          </div>
 
-          <p className="text-[11px] text-slate-400 mt-2">
-            Pemasukan dari pembelian aset & sewa utilitas peternak masuk langsung ke kas treasury owner.
-          </p>
-
-          <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-amber-500/20">
-            <span className="text-[10px] font-mono text-amber-300/80">0xOwner...89D2</span>
-            {onOpenOwnerTreasuryModal && (
+          <div className="flex items-center gap-2">
+            {onOpenAdminOffice && (
               <button
                 type="button"
                 onClick={() => {
                   sounds.playClick();
-                  onOpenOwnerTreasuryModal();
+                  onOpenAdminOffice();
                 }}
-                className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-mono text-[10px] font-bold border border-amber-500/40 transition flex items-center gap-1 shadow-sm"
+                className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-extrabold font-mono text-[11px] flex items-center gap-1.5 transition shadow"
               >
-                <span>Kelola & Cairkan Kas &rarr;</span>
+                <span>Buka Kantor Admin &rarr;</span>
+              </button>
+            )}
+            {onLockAdminMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  sounds.playClick();
+                  onLockAdminMode();
+                }}
+                className="py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-mono text-[11px] flex items-center gap-1.5 transition"
+                title="Sembunyikan kembali dari publik"
+              >
+                <Lock className="w-3 h-3 text-rose-400" />
+                <span>Kunci Mode Publik</span>
               </button>
             )}
           </div>
         </div>
+      )}
+
+      {/* Main Balances & Quick CTAs Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {isAdminUnlocked ? (
+          /* Kas Treasury Owner Card (Only for Sovereign Owner / Admin) */
+          <div className="bg-gradient-to-br from-amber-950/30 via-slate-900 to-slate-950 border border-amber-500/30 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+            <div className="flex items-center justify-between text-xs text-amber-400/90 mb-1">
+              <span className="font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                {t.ownerKas}
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
+                Protocol Reserve (Owner)
+              </span>
+            </div>
+
+            <div className="text-3xl font-extrabold font-mono text-amber-300 tracking-tight mt-1">
+              {formatCustomCurrency(balances.kasTreasuryOwner, activeCurrency)}
+            </div>
+            {activeCurrency !== 'IDR' && (
+              <div className="text-xs font-mono text-slate-400 mt-0.5">
+                ≈ {formatRupiah(balances.kasTreasuryOwner)}
+              </div>
+            )}
+
+            <p className="text-[11px] text-slate-400 mt-2">
+              Pemasukan hulu: sewa utilitas kandang, margin pakan 5 fase, sanitasi pasca-afkir, dan broker fee.
+            </p>
+
+            <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-amber-500/20">
+              <span className="text-[10px] font-mono text-amber-300/80">0xOwner...89D2</span>
+              {onOpenOwnerTreasuryModal && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    sounds.playClick();
+                    onOpenOwnerTreasuryModal();
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-mono text-[10px] font-bold border border-amber-500/40 transition flex items-center gap-1 shadow-sm"
+                >
+                  <span>Kelola &amp; Cairkan Kas &rarr;</span>
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Public View Card: Produktivitas Panen Telur (Zero Mention of Owner Kas) */
+          <div className="bg-gradient-to-br from-indigo-950/30 via-slate-900 to-slate-950 border border-indigo-500/30 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+            <div className="flex items-center justify-between text-xs text-indigo-400/90 mb-1">
+              <span className="font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <span>🥚</span>
+                Produksi Panen Telur (Otomatis 24/7)
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
+                Zero Mortality
+              </span>
+            </div>
+
+            <div className="text-3xl font-extrabold font-mono text-cyan-300 tracking-tight mt-1 flex items-baseline gap-2">
+              <span>{(accumulatedEggs || 120).toLocaleString('id-ID')}</span>
+              <span className="text-xs font-normal text-slate-400 font-sans">
+                butir (~{(((accumulatedEggs || 120) * 62.5) / 1000).toFixed(1)} Kg Netto)
+              </span>
+            </div>
+
+            <p className="text-[11px] text-slate-400 mt-2">
+              Telur otomatis bertambah secara real-time. Siap ditarik ke DANA P2P atau Bank dengan harga serap broker Rp 21.500 / kg.
+            </p>
+
+            <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-indigo-500/20">
+              <span className="text-[10px] font-mono text-indigo-300/80">Grade A/B Standar Pinsar</span>
+              <button
+                type="button"
+                onClick={() => {
+                  sounds.playClick();
+                  onOpenGramasiModal();
+                }}
+                className="px-2.5 py-1 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-mono text-[10px] font-bold border border-indigo-500/40 transition flex items-center gap-1 shadow-sm"
+              >
+                <span>Lihat Timbangan Gramasi &rarr;</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Saldo Dompet Saya Card */}
         <div className="bg-gradient-to-br from-emerald-950/30 via-slate-900 to-slate-950 border border-emerald-500/30 rounded-2xl p-5 shadow-xl relative overflow-hidden">

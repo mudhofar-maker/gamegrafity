@@ -1,6 +1,6 @@
 {
   "name": "Gamegrafity Farm Sovereign Mode",
-  "description": "Platform simulator peternakan ayam berdaulat Gamegrafity dengan dual-payout system: P2P DANA E-Wallet dan Web3 ETH Smart Contract terverifikasi Etherscan.",
+  "description": "Platform ekosistem peternakan ayam berdaulat Gamegrafity dengan sistem produksi otomatis, fasilitas kandang modern, dan dual-payout: P2P DANA/Bank lokal serta Web3 Smart Contract.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

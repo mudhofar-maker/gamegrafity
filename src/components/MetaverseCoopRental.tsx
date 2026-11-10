@@ -302,7 +302,7 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-300">
-                Pilih paket sewa infrastruktur bulanan (Lahan + Kandang), bayar instan ke Kas Treasury Owner, dan hitung simulasi net profit panen otomatis.
+                Pilih paket sewa infrastruktur bulanan (Lahan + Kandang), bayar instan ke Kas Treasury Owner, dan kalkulasi proyeksi net profit panen otomatis.
               </p>
             </div>
           </div>
@@ -338,7 +338,7 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
               }`}
             >
               <Calculator className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Simulasi Net Profit Panen</span>
+              <span>Kalkulator Proyeksi Net Profit</span>
             </button>
 
             <button
@@ -648,7 +648,7 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
         </div>
       )}
 
-      {/* 3. TAB CONTENT: SIMULASI PENDAPATAN PANEN OTOMATIS (Net Profit Calculator) */}
+      {/* 3. TAB CONTENT: KALKULATOR PROYEKSI PENDAPATAN PANEN OTOMATIS (Net Profit Calculator) */}
       {activeTab === 'simulator' && (
         <div className="space-y-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-5">
@@ -659,7 +659,7 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white">
-                    Simulasi Pendapatan Panen Otomatis & Net Profit Bulanan
+                    Kalkulator Proyeksi Pendapatan Panen & Net Profit Bulanan
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">
                     Hitung proyeksi pendapatan bersih peternak secara real-time berdasarkan kapasitas populasi dan efisiensi pakan.
@@ -1324,14 +1324,14 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
             </div>
           </div>
 
-          {/* Interactive Stress Test Trigger */}
+          {/* Diagnostik Sensor Otomatis */}
           <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-3">
             <div>
               <span className="font-bold text-slate-200 text-xs block">
-                Uji Ketahanan Sensor IoT & Respon Otomatis:
+                Kalibrasi & Diagnostik Respon Sensor IoT:
               </span>
               <span className="text-[11px] text-slate-400">
-                Simulasikan lonjakan panas ekstrim (+6°C) untuk menguji respon pendingin evaporative pad otomatis.
+                Uji diagnosa respon pendingin evaporative pad dan exhaust fan terhadap fluktuasi mikroklimat kandang.
               </span>
             </div>
             <button
@@ -1340,12 +1340,12 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
               onClick={handleTriggerHeatSpike}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition flex items-center gap-1.5 ${
                 isSimulatingHeat
-                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 cursor-wait'
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 cursor-wait'
                   : 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30'
               }`}
             >
-              <Flame className="w-3.5 h-3.5 text-rose-400" />
-              <span>{isSimulatingHeat ? 'Simulasi Berjalan...' : 'Simulasi Lonjakan Suhu (+6°C)'}</span>
+              <Flame className="w-3.5 h-3.5 text-amber-400" />
+              <span>{isSimulatingHeat ? 'Diagnostik Berjalan...' : 'Uji Respon Sensor Otomatis (+6°C)'}</span>
             </button>
           </div>
         </div>

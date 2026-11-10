@@ -47,6 +47,7 @@ export const OwnerTreasurySettlementModal: React.FC<OwnerTreasurySettlementModal
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [lastReceipt, setLastReceipt] = useState<OwnerRealWorldWithdrawal | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -103,8 +104,6 @@ export const OwnerTreasurySettlementModal: React.FC<OwnerTreasurySettlementModal
   ];
 
   const currentDest = destinations.find((d) => d.id === selectedDestination) || destinations[0];
-
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleExecuteCashout = () => {
     setErrorMsg(null);
