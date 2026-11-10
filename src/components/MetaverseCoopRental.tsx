@@ -443,8 +443,8 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
             </span>
           </div>
 
-          {/* Cards Grid for the 3 Bundled Packages */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Cards Grid for the Bundled Packages (Mikro 10, Starter 100, Pro 500, Sovereign 1.000) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {INFRASTRUCTURE_PACKAGES.map((pkg) => {
               const isAffordable = saldoDompetSaya >= pkg.totalMonthlyRentIdr;
               const isActive =

@@ -311,7 +311,7 @@ export interface OwnerRealWorldWithdrawal {
 export interface InfrastructurePackage {
   id: string;
   name: string;
-  tierLevel: 'starter' | 'pro' | 'sovereign';
+  tierLevel: 'micro' | 'starter' | 'pro' | 'sovereign';
   badge: string;
   tagline: string;
   recommended?: boolean;
@@ -365,7 +365,7 @@ export interface MetaverseCoopItem {
   constructionCostRangeIdr?: string;
   constructionCostMinIdr?: number;
   constructionCostMaxIdr?: number;
-  scaleCategory?: 'SKALA_KECIL_50' | 'SKALA_MENENGAH_100' | 'SKALA_KOMERSIAL_500' | 'SKALA_INDUSTRI_1000' | 'LAHAN';
+  scaleCategory?: 'SKALA_MIKRO_10' | 'SKALA_KECIL_50' | 'SKALA_MENENGAH_100' | 'SKALA_KOMERSIAL_500' | 'SKALA_INDUSTRI_1000' | 'LAHAN';
   specDetails: {
     dimensions: string;
     feederType: string;

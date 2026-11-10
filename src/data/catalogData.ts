@@ -257,6 +257,21 @@ export const INITIAL_CATALOG: CatalogItem[] = [
     businessLogicNote: 'Skalabilitas volume gramasi: semakin luas lahan, semakin besar tonase telur harian yang diserap offtaker.'
   },
   {
+    id: 'coop-rental-micro-10',
+    name: 'Sewa Kandang Skala Mikro (10 Ekor)',
+    category: 'Sewa Bulanan',
+    price: 50000,
+    unit: '/ Bulan',
+    actionText: 'Sewa',
+    description: 'Sewa utility kandang modular semi-closed ringkas untuk 10 ekor ayam pullet. Mengeliminasi modal pembangunan awal (Rp 350.000 – Rp 700.000).',
+    iconName: 'Home',
+    badge: 'Konstruksi: Rp 350k – Rp 700k',
+    isUnlimitedStock: true,
+    replenishmentSchedule: 'Modular Prefab Instant',
+    continuousQuotaStatus: 'Stok Digital Unlimited',
+    businessLogicNote: 'Acuan konstruksi fisik: Rp 350.000 – Rp 700.000. Sewa utility Rp 50.000/bln. Menghasilkan ~8-9 butir telur/hari, solusi termudah bagi pemula menguji sistem otomatis.'
+  },
+  {
     id: 'coop-rental-small-50',
     name: 'Sewa Kandang Skala Kecil (50 Ekor)',
     category: 'Sewa Bulanan',

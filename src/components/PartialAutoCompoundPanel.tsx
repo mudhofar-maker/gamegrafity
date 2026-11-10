@@ -84,10 +84,10 @@ export const PartialAutoCompoundPanel: React.FC<PartialAutoCompoundPanelProps> =
     const grossRevenue = Math.round(monthlyKg * 21500); // Rp 21.500 / Kg acuan broker
 
     // Monthly coop utility rent
-    const packageCost = birds <= 100 ? 550000 : birds <= 500 ? 2350000 : 4000000;
+    const packageCost = birds <= 10 ? 85000 : birds <= 100 ? 550000 : birds <= 500 ? 2350000 : 4000000;
     // Feed: 3.4 kg/month * Rp 11.500/kg (Pakan Fase 4 Layer Puncak)
     const feedCost = Math.round(birds * 3.4 * 11500);
-    const utilityCost = birds <= 100 ? 250000 : birds <= 500 ? 600000 : 1200000;
+    const utilityCost = birds <= 10 ? 25000 : birds <= 100 ? 250000 : birds <= 500 ? 600000 : 1200000;
     const totalExpenses = packageCost + feedCost + utilityCost;
 
     // Monthly Net Profit
@@ -405,6 +405,28 @@ export const PartialAutoCompoundPanel: React.FC<PartialAutoCompoundPanelProps> =
             <span className="text-[11px] text-slate-400">
               Perhatikan bagaimana porsi kas tunai terus meningkat seiring bertambahnya populasi ayam dari dana compound.
             </span>
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className="text-[10px] font-mono text-slate-500 uppercase">Pilih Paket:</span>
+              {[
+                { label: '10 Ekor (Mikro)', value: 10 },
+                { label: '100 Ekor (Starter)', value: 100 },
+                { label: '500 Ekor (Pro)', value: 500 },
+                { label: '1.000 Ekor (Mega)', value: 1000 },
+              ].map((b) => (
+                <button
+                  key={b.value}
+                  type="button"
+                  onClick={() => setSimulatedFlockBase(b.value)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition ${
+                    simulatedFlockBase === b.value
+                      ? 'bg-purple-600 border-purple-400 text-white'
+                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {b.label}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="text-right">
             <span className="text-[10px] font-mono text-slate-500 block">Total Tunai Diterima (3 Bulan):</span>

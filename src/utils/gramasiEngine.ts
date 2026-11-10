@@ -549,6 +549,31 @@ export interface PerpetualFountainPackageModel {
 }
 
 export const PERPETUAL_FOUNTAIN_PACKAGES: Record<string, PerpetualFountainPackageModel> = {
+  'pkg-micro-10': {
+    packageId: 'pkg-micro-node-10',
+    packageName: 'Paket Kemitraan Mikro (10 Ekor Pullet)',
+    flockSize: 10,
+    entryCostIdr: 1250000, // Rp 1.250.000 all-in siap produksi (termasuk 10 pullet 18 minggu, sewa kandang mikro, pakan awal & vitamin)
+    monthlyCoopRentIdr: 85000,
+    annualEggOutputKg: 193.9,
+    annualEggRevenueBrokerIdr: Math.round(193.9 * 21500), // Rp 4.168.850
+    terminalAfkirRevenueIdr: 10 * 40000, // Rp 400.000
+    totalGrossFarmerRevenueIdr: Math.round(193.9 * 21500) + 400000, // Rp 4.568.850
+    annualFeedAndOperationalCostIdr: 4008850,
+    netFarmerProfitIdr: 560000, // ~44.8% ROI realistis
+    farmerRoiPercent: 44.8,
+    ownerAnnualRevenueStreams: {
+      pulletSaleMarginIdr: 100000, // Rp 10.000 x 10
+      feedPhasesMarginIdr: 630000, // Grosir pakan 450 kg
+      vitaminMarginIdr: 12000,
+      coopRentAnnualIdr: 1020000, // Sewa kandang mikro Rp 85k x 12 bln
+      cleaningPostAfkirServiceIdr: 35000, // Jasa cuci kandang mikro pasca-afkir
+      eggBrokerTradingMarginIdr: Math.round(193.9 * 6000), // Rp 1.163.400 (jual ritel @ Rp 27.500)
+      afkirBrokerTradingMarginIdr: 180000, // Karkas broker margin
+      autoCompoundingFeeIdr: 92000, // Biaya administrasi auto-compounding 3.5%
+      totalOwnerNetProfitIdr: 3232400,
+    },
+  },
   'pkg-starter-100': {
     packageId: 'pkg-starter-node',
     packageName: 'Paket Kemitraan Starter (100 Ekor Pullet)',

@@ -2,6 +2,35 @@ import { MetaverseCoopItem } from '../types/farm';
 
 export const METAVERSE_COOP_CATALOG: MetaverseCoopItem[] = [
   {
+    id: 'kandang-skala-mikro-10',
+    name: 'Kandang Skala Mikro (10 Ekor)',
+    tier: 'Modular Semi-Closed Micro',
+    monthlyRentIdr: 50000,
+    capacityBirds: 10,
+    constructionCostRangeIdr: 'Rp 350.000 – Rp 700.000',
+    constructionCostMinIdr: 350000,
+    constructionCostMaxIdr: 700000,
+    scaleCategory: 'SKALA_MIKRO_10',
+    description: 'Kandang modular semi-closed ringkas berkapasitas 10 ekor ayam pullet. Solusi paling terjangkau bagi pemula untuk menguji sistem produksi otomatis tanpa beban capex Rp 350.000 – Rp 700.000.',
+    ventilationType: 'Ventilasi Ram Kawat Galvanis Kasa Ganda Alami',
+    coolingSystem: 'Sirkulasi Alami Tropis Terlindung',
+    sensors: [
+      'Sensor Suhu NTC Analog',
+      'Sensor Kelembapan Relatif (RH%)'
+    ],
+    eggBonusPercent: 2,
+    badge: 'Konstruksi: Rp 350k – Rp 700k',
+    recommended: false,
+    specDetails: {
+      dimensions: '2m x 1.5m x 1.8m (Baja Ringan Ringkas)',
+      feederType: 'Manual Feeder Port 2 Kg',
+      manureHandling: 'Baki Pengerukan Feses Harian',
+      lightingControl: 'Saklar Timer Otomatis',
+      iotTelemetryInterval: 'Tiap 60 Detik',
+      biosecurityRating: 'Tier 3 (Steril Standar Mikro)'
+    }
+  },
+  {
     id: 'kandang-skala-kecil-50',
     name: 'Kandang Skala Kecil (50 Ekor)',
     tier: 'Modular Semi-Closed Mini',
@@ -154,6 +183,38 @@ export const METAVERSE_COOP_CATALOG: MetaverseCoopItem[] = [
 ];
 
 export const INFRASTRUCTURE_PACKAGES: import('../types/farm').InfrastructurePackage[] = [
+  {
+    id: 'pkg-micro-node-10',
+    name: 'Paket Kemitraan Mikro (10 Ekor Pullet)',
+    tierLevel: 'micro',
+    badge: 'Paket Skala Terkecil (10 Ekor)',
+    tagline: 'Kapasitas terkecil 10 ekor pullet 18 minggu, ideal untuk belajar dan membuktikan aliran hasil harian otomatis.',
+    recommended: false,
+    entryPackagePriceIdr: 1250000, // Rp 1.250.000 all-in siap produksi
+    totalMonthlyRentIdr: 85000,
+    breakdown: {
+      landCostIdr: 35000,
+      coopCostIdr: 50000,
+      landDesc: 'Lahan Peternakan Mikro Kavling Mini (Zona Biosekuriti Steril Terkontrol)',
+      coopDesc: 'Kandang Modular Semi-Closed House Skala Mikro 10 Ekor'
+    },
+    capacityBirds: 10,
+    hardwareSpecs: {
+      ventilation: 'Ventilasi Ram Kawat Galvanis Kasa Ganda Alami',
+      sensors: 'Sensor NTC Analog Suhu & Sensor RH Terintegrasi',
+      coolingSystem: 'Sirkulasi Alami Tropis Terlindung',
+      structure: 'Konstruksi Baja Ringan Modular 10 Ekor'
+    },
+    projectedNetProfitMonthly: {
+      minIdr: 45000,
+      maxIdr: 55000,
+      displayRange: 'Rp 45.000 - Rp 55.000 / bln',
+      dailyEggs: 8, // ~85% lay rate dari 10 ekor (~8-9 butir/hari)
+      monthlyEggRevenueIdr: 347400, // ~16.15 kg x Rp 21.500/kg
+      monthlyFeedCostIdr: 220000,
+      estNetProfitIdr: 48000
+    }
+  },
   {
     id: 'pkg-starter-node',
     name: 'Paket Kemitraan Starter (100 Ekor Pullet)',

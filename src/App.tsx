@@ -1543,24 +1543,25 @@ export default function App() {
     });
 
     // 3. Update modern coop days in cycle & improve biosecurity & scale population to package capacity
-    const productiveLayers = Math.floor(pkg.capacityBirds * 0.88);
-    const pullets = Math.floor(pkg.capacityBirds * 0.08);
-    const chicks = Math.floor(pkg.capacityBirds * 0.04);
+    const assignedRoosters = pkg.capacityBirds <= 10 ? 1 : 2;
+    const productiveLayers = Math.max(1, Math.floor(pkg.capacityBirds * 0.88));
+    const pullets = pkg.capacityBirds <= 10 ? 1 : Math.floor(pkg.capacityBirds * 0.08);
+    const chicks = Math.max(0, pkg.capacityBirds - assignedRoosters - productiveLayers - pullets);
     const hens = productiveLayers + pullets + chicks;
 
     setCycle((prev) => ({
       ...prev,
       population: pkg.capacityBirds,
       hens,
-      roosters: 2,
-      feedStockKg: Math.max(prev.feedStockKg, Math.round(pkg.capacityBirds * 0.6)),
+      roosters: assignedRoosters,
+      feedStockKg: Math.max(prev.feedStockKg, Math.max(15, Math.round(pkg.capacityBirds * 0.6))),
       modernCoopDaysRemaining: prev.modernCoopDaysRemaining + durationDays,
       acClimateDaysRemaining: prev.acClimateDaysRemaining + durationDays,
       ambientTempC: 24.0,
       targetTempC: 24.0,
       heatStressActive: false,
       biosecurityHealth: 100,
-      landPlots: Math.max(prev.landPlots, Math.ceil(pkg.capacityBirds / 50)),
+      landPlots: Math.max(prev.landPlots, Math.max(1, Math.ceil(pkg.capacityBirds / 50))),
       cohorts: {
         ...prev.cohorts,
         layerProductiveCount: productiveLayers,
