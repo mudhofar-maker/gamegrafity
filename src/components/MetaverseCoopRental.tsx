@@ -120,14 +120,15 @@ export const MetaverseCoopRental: React.FC<MetaverseCoopRentalProps> = ({
 
   // Handle rental for Bundled Package
   const handleExecuteRentPackage = (pkg: InfrastructurePackage) => {
+    if (onOpenCheckoutPackage) {
+      onOpenCheckoutPackage(pkg);
+      return;
+    }
+
     const cost = pkg.totalMonthlyRentIdr;
     if (saldoDompetSaya < cost) {
       sounds.playDirectivePing();
-      if (onOpenCheckoutPackage) {
-        onOpenCheckoutPackage(pkg);
-      } else {
-        onOpenTopUp();
-      }
+      onOpenTopUp();
       return;
     }
 

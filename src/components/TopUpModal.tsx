@@ -32,6 +32,7 @@ interface TopUpModalProps {
     priceIdr: number;
   };
   onOpenTwoWayConfirmation?: (service: { name: string; amountIdr: number; channel?: SupportedPaymentChannel }) => void;
+  defaultChannel?: SupportedPaymentChannel;
 }
 
 export const TopUpModal: React.FC<TopUpModalProps> = ({
@@ -41,11 +42,12 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
   actorName,
   initialAmount,
   targetPackage,
-  onOpenTwoWayConfirmation
+  onOpenTwoWayConfirmation,
+  defaultChannel
 }) => {
   const [selectedAmount, setSelectedAmount] = useState<number>(initialAmount || targetPackage?.priceIdr || 100000);
   const [customAmount, setCustomAmount] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<SupportedPaymentChannel>('QRIS');
+  const [paymentMethod, setPaymentMethod] = useState<SupportedPaymentChannel>(defaultChannel || (targetPackage ? 'DANA' : 'QRIS'));
   const [timeLeft, setTimeLeft] = useState<number>(300); // 5 minutes
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
@@ -59,7 +61,12 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
     } else if (targetPackage) {
       setSelectedAmount(targetPackage.priceIdr);
     }
-  }, [initialAmount, targetPackage, isOpen]);
+    if (defaultChannel) {
+      setPaymentMethod(defaultChannel);
+    } else if (targetPackage) {
+      setPaymentMethod('DANA'); // Default directly to DANA / BCA for package orders
+    }
+  }, [initialAmount, targetPackage, isOpen, defaultChannel]);
 
   useEffect(() => {
     if (!isOpen) {

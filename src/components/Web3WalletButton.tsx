@@ -13,6 +13,8 @@ interface Web3WalletButtonProps {
   compact?: boolean;
   className?: string;
   balanceEth?: string | null;
+  chainId?: number | null;
+  onSwitchNetwork?: (targetChainId: number) => void;
 }
 
 export const Web3WalletButton: React.FC<Web3WalletButtonProps> = ({
@@ -24,6 +26,8 @@ export const Web3WalletButton: React.FC<Web3WalletButtonProps> = ({
   compact = false,
   className = '',
   balanceEth,
+  chainId,
+  onSwitchNetwork,
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -132,6 +136,46 @@ export const Web3WalletButton: React.FC<Web3WalletButtonProps> = ({
                 )}
               </div>
 
+              {/* Network Status & Switcher */}
+              <div className="p-2 bg-slate-950/80 rounded-lg border border-slate-800 space-y-1.5">
+                <div className="text-[10px] text-slate-400 flex items-center justify-between">
+                  <span>JARINGAN AKTIF</span>
+                  <span className={`font-bold ${
+                    chainId === 137 ? 'text-purple-400' : chainId === 42161 ? 'text-sky-400' : 'text-blue-400'
+                  }`}>
+                    {chainId === 137 ? '🟣 Polygon PoS' : chainId === 42161 ? '🔵 Arbitrum One' : chainId === 1 ? '🔷 Ethereum' : `Chain #${chainId || '137'}`}
+                  </span>
+                </div>
+                {onSwitchNetwork && (
+                  <div className="grid grid-cols-2 gap-1 pt-1 border-t border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sounds.playClick();
+                        onSwitchNetwork(137);
+                      }}
+                      className={`py-1 px-1.5 rounded text-[10px] font-bold transition flex items-center justify-center gap-1 ${
+                        chainId === 137 ? 'bg-purple-600/40 text-purple-200 border border-purple-500/60' : 'bg-slate-800 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      🟣 Polygon
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sounds.playClick();
+                        onSwitchNetwork(42161);
+                      }}
+                      className={`py-1 px-1.5 rounded text-[10px] font-bold transition flex items-center justify-center gap-1 ${
+                        chainId === 42161 ? 'bg-sky-600/40 text-sky-200 border border-sky-500/60' : 'bg-slate-800 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      🔵 Arbitrum
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* Action: Copy Address */}
               <button
                 type="button"
@@ -145,15 +189,21 @@ export const Web3WalletButton: React.FC<Web3WalletButtonProps> = ({
                 {copied && <Check className="w-3.5 h-3.5 text-emerald-400" />}
               </button>
 
-              {/* Action: Etherscan */}
+              {/* Action: Explorer Link */}
               <a
-                href={`https://etherscan.io/address/${account}`}
+                href={
+                  chainId === 137
+                    ? `https://polygonscan.com/address/${account}`
+                    : chainId === 42161
+                    ? `https://arbiscan.io/address/${account}`
+                    : `https://etherscan.io/address/${account}`
+                }
                 target="_blank"
                 rel="noreferrer"
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-200 transition text-left"
               >
                 <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                Lihat di Etherscan
+                Lihat di {chainId === 137 ? 'PolygonScan' : chainId === 42161 ? 'Arbiscan' : 'Etherscan'}
               </a>
 
               {/* Action: User Profile Settings */}

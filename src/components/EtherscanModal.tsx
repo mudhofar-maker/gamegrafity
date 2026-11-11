@@ -28,8 +28,12 @@ import {
   SOLIDITY_SOURCE_CODE,
   CONTRACT_ABI,
   IDR_PER_ETH,
-  IDR_PER_EGG
+  IDR_PER_EGG,
+  getExplorerTxUrl,
+  getExplorerAddressUrl,
+  getExplorerName
 } from '../services/web3Service';
+import { SUPPORTED_CHAINS } from '../config/web3Config';
 import { formatRupiah, shortenAddress } from '../utils/formatters';
 import { sounds } from '../utils/soundEffects';
 
@@ -60,6 +64,8 @@ export const EtherscanModal: React.FC<EtherscanModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('OVERVIEW');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const [selectedChainId, setSelectedChainId] = useState<number>(137); // Default Polygon
 
   // Read Contract interactive states
   const [queryAddress, setQueryAddress] = useState<string>(sovereignAddress || '');
@@ -120,6 +126,8 @@ export const EtherscanModal: React.FC<EtherscanModalProps> = ({
   };
 
   const attestation: HarvestAttestationRecord | undefined = displayReceipt.attestation;
+  const activeExplorerName = getExplorerName(selectedChainId);
+  const activeContractExplorerUrl = getExplorerAddressUrl(CONTRACT_ADDRESS, selectedChainId);
 
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -132,7 +140,7 @@ export const EtherscanModal: React.FC<EtherscanModalProps> = ({
     sounds.playClick();
     const addr = queryAddress.trim() || sovereignAddress || '0x71C8364f3B821A8598711674488b03FfB61b8D01';
     setQueriedFarmerResult({
-      sovereignDid: `did:pkh:eip155:1:${addr}`,
+      sovereignDid: `did:pkh:eip155:${selectedChainId}:${addr}`,
       totalHarvestCount: 420,
       totalClaimedWei: '0.023333 ETH (~Rp 1.050.000)',
       isRegistered: true,
@@ -142,7 +150,7 @@ export const EtherscanModal: React.FC<EtherscanModalProps> = ({
   const handleExecuteWrite = () => {
     sounds.playClick();
     setIsExecutingWrite(true);
-    setWriteStatusMsg('Membuat tanda tangan EIP-712 & Broadcast txn ke EVM Mempool...');
+    setWriteStatusMsg(`Membuat tanda tangan EIP-712 & Broadcast txn ke EVM Mempool (${activeExplorerName})...`);
 
     setTimeout(() => {
       setIsExecutingWrite(false);
@@ -157,36 +165,81 @@ export const EtherscanModal: React.FC<EtherscanModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in">
       <div className="relative w-full max-w-5xl bg-[#111927] border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh]">
-        {/* Etherscan Brand Header */}
-        <div className="px-5 py-3.5 bg-[#0d131f] border-b border-slate-800 flex items-center justify-between">
+        {/* Multi-Chain Brand Header */}
+        <div className="px-5 py-3.5 bg-[#0d131f] border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-md text-sm">
-              Ξ
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white shadow-md text-xs font-mono ${
+              selectedChainId === 137 ? 'bg-purple-600' : selectedChainId === 42161 ? 'bg-sky-600' : 'bg-blue-600'
+            }`}>
+              {selectedChainId === 137 ? 'POL' : selectedChainId === 42161 ? 'ARB' : 'ETH'}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-white text-base font-sans">Etherscan</span>
-                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                  Agro-Fi Verification L2 / Ethereum
+                <span className="font-bold text-white text-base font-sans">{activeExplorerName}</span>
+                <span className={`text-[10px] uppercase font-mono px-2 py-0.5 rounded border ${
+                  selectedChainId === 137
+                    ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                    : selectedChainId === 42161
+                    ? 'bg-sky-500/20 text-sky-300 border-sky-500/40'
+                    : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                }`}>
+                  {selectedChainId === 137 ? 'Polygon PoS (Gas Murah)' : selectedChainId === 42161 ? 'Arbitrum One L2' : 'Ethereum L1'}
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 hidden sm:inline-block">
                   RWA Oracle Attested
                 </span>
               </div>
               <div className="text-[11px] font-mono text-slate-400">
-                Contract: <span className="text-blue-400">{shortenAddress(CONTRACT_ADDRESS)}</span> • {CONTRACT_NAME}.sol
+                Contract: <span className="text-cyan-400">{shortenAddress(CONTRACT_ADDRESS)}</span> • {CONTRACT_NAME}.sol
               </div>
             </div>
           </div>
 
+          {/* Quick Network Switcher (Polygon, Arbitrum, Ethereum) */}
+          <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <button
+              type="button"
+              onClick={() => { setSelectedChainId(137); sounds.playClick(); }}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition flex items-center gap-1 ${
+                selectedChainId === 137
+                  ? 'bg-purple-600 text-white shadow'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>🟣 Polygon</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setSelectedChainId(42161); sounds.playClick(); }}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition flex items-center gap-1 ${
+                selectedChainId === 42161
+                  ? 'bg-sky-600 text-white shadow'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>🔵 Arbitrum</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setSelectedChainId(1); sounds.playClick(); }}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition flex items-center gap-1 ${
+                selectedChainId === 1
+                  ? 'bg-blue-600 text-white shadow'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>🔷 Ethereum</span>
+            </button>
+          </div>
+
           <div className="flex items-center gap-3">
             <a
-              href={`https://etherscan.io/address/${CONTRACT_ADDRESS}`}
+              href={activeContractExplorerUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-mono hidden md:flex"
+              className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-mono hidden md:flex"
             >
-              Public Network <ExternalLink className="w-3 h-3" />
+              Buka di {activeExplorerName} <ExternalLink className="w-3 h-3" />
             </a>
             <button
               onClick={onClose}

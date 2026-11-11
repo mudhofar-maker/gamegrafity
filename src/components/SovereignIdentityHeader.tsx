@@ -65,6 +65,8 @@ interface SovereignIdentityHeaderProps {
   onConnectMetaMask?: () => void;
   onDisconnectMetaMask?: () => void;
   metaMaskBalanceEth?: string | null;
+  chainId?: number | null;
+  onSwitchNetwork?: (targetChainId: number) => void;
   userProfile?: { fullName: string; role: 'owner' | 'peternak' };
   activeFarmerAccount?: { id: string; fullName: string; avatarUrl?: string; role: 'owner' | 'peternak'; status: string; } | null;
   onOpenPersonalDashboard?: () => void;
@@ -115,6 +117,8 @@ export const SovereignIdentityHeader: React.FC<SovereignIdentityHeaderProps> = (
   onConnectMetaMask,
   onDisconnectMetaMask,
   metaMaskBalanceEth,
+  chainId,
+  onSwitchNetwork,
   userProfile,
   activeFarmerAccount,
   onOpenPersonalDashboard,
@@ -553,6 +557,8 @@ export const SovereignIdentityHeader: React.FC<SovereignIdentityHeaderProps> = (
             onDisconnect={onDisconnectMetaMask}
             onOpenProfile={onOpenProfileModal}
             balanceEth={metaMaskBalanceEth}
+            chainId={chainId}
+            onSwitchNetwork={onSwitchNetwork}
           />
         </div>
       </div>

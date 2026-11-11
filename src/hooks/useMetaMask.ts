@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ethers } from 'ethers';
-import { OWNER_METAMASK_ADDRESS, DEFAULT_CHAIN_ID } from '../config/web3Config';
+import { OWNER_METAMASK_ADDRESS, DEFAULT_CHAIN_ID, SUPPORTED_CHAINS } from '../config/web3Config';
 
 declare global {
   interface Window {
@@ -232,7 +232,7 @@ export function useMetaMask(): UseMetaMaskReturn {
     }
   }, [account, fetchBalance]);
 
-  // Switch network helper
+  // Switch network helper (Supports auto-adding Polygon and Arbitrum One to MetaMask)
   const switchNetwork = useCallback(async (targetChainId = DEFAULT_CHAIN_ID): Promise<boolean> => {
     if (typeof window === 'undefined' || !window.ethereum) return false;
     const hex = '0x' + targetChainId.toString(16);
@@ -243,6 +243,33 @@ export function useMetaMask(): UseMetaMaskReturn {
       });
       return true;
     } catch (err: any) {
+      // Error code 4902 indicates that the chain has not been added to MetaMask
+      if (err.code === 4902 || err?.data?.originalError?.code === 4902 || err.message?.includes('Unrecognized chain ID')) {
+        const chainConfig = Object.values(SUPPORTED_CHAINS).find((c) => c.chainId === targetChainId);
+        if (chainConfig) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [
+                {
+                  chainId: hex,
+                  chainName: chainConfig.name,
+                  nativeCurrency: {
+                    name: chainConfig.currency,
+                    symbol: chainConfig.currency,
+                    decimals: 18,
+                  },
+                  rpcUrls: [chainConfig.rpcUrl],
+                  blockExplorerUrls: [chainConfig.explorer],
+                },
+              ],
+            });
+            return true;
+          } catch (addErr) {
+            console.warn('Failed to add chain to MetaMask:', addErr);
+          }
+        }
+      }
       console.warn('Network switch failed or rejected:', err);
       return false;
     }

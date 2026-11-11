@@ -58,6 +58,7 @@ import { FarmerAccountSwitcherModal } from './components/FarmerAccountSwitcherMo
 import { SovereignMonetaryDirectiveModal } from './components/SovereignMonetaryDirectiveModal';
 import { AboutGamegrafityModal } from './components/AboutGamegrafityModal';
 import { AuthModal, AuthUser } from './components/AuthModal';
+import { VisitorTargetGuidedFunnel } from './components/VisitorTargetGuidedFunnel';
 import { SovereignAdminOfficeModal } from './components/SovereignAdminOfficeModal';
 import { LivePortfolioChart } from './components/LivePortfolioChart';
 import { CertificationSection } from './components/CertificationSection';
@@ -195,6 +196,8 @@ export default function App() {
     connect: connectMetaMask,
     disconnect: disconnectMetaMask,
     balanceEth: metaMaskBalanceEth,
+    chainId: metaMaskChainId,
+    switchNetwork: switchMetaMaskNetwork,
   } = useMetaMask();
 
   // User Profile & Role Settings State (Default: Mudhofar, Owner)
@@ -264,20 +267,16 @@ export default function App() {
   const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
     try {
       const saved = localStorage.getItem('gamegrafity_auth_user');
-      return saved ? JSON.parse(saved) : {
-        id: 1,
-        google_email: 'owner@gamegrafity.farm',
-        full_name: 'Mudhofar (Founder & Sovereign Owner)',
-        signup_date: new Date(Date.now() - 86400000 * 14).toISOString(),
-        last_sign_in: new Date().toISOString(),
-        last_sign_out: null,
-        avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-        role: 'owner' as const
-      };
+      return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
     }
   });
+
+  // Pending checkout package for auto-redirect after sign up
+  const [pendingCheckoutPackage, setPendingCheckoutPackage] = useState<InfrastructurePackage | null>(null);
+  const [authModalInitialMode, setAuthModalInitialMode] = useState<'SIGN_IN' | 'SIGN_UP'>('SIGN_UP');
+  const [authPromptMessage, setAuthPromptMessage] = useState<string | null>(null);
 
   // Active Metaverse Coop & Infrastructure Rental State
   const [activeCoopRental, setActiveCoopRental] = useState<ActiveCoopRental | null>({
@@ -495,6 +494,17 @@ export default function App() {
       'SYSTEM',
       true
     );
+
+    // Otomatis arahkan ke pembayaran DANA / BCA jika ada paket yang sedang dipesan
+    if (pendingCheckoutPackage) {
+      const targetPkg = pendingCheckoutPackage;
+      setPendingCheckoutPackage(null);
+      setTargetCheckoutPackage(targetPkg);
+      setTimeout(() => {
+        setIsOpenTopUp(true);
+        sounds.playCash();
+      }, 400);
+    }
   };
 
   // Auth Handler: Sign Out
@@ -1495,8 +1505,35 @@ export default function App() {
     } catch (_) {}
   };
 
+  // ======================== ALUR SENTRAL ORDER PAKET (AUTO-DIRECT AUTH / DANA / BCA) ========================
+  const handleInitiatePackageOrder = (pkgOrId: InfrastructurePackage | string) => {
+    sounds.playClick();
+    const pkg = typeof pkgOrId === 'string'
+      ? INFRASTRUCTURE_PACKAGES.find((p) => p.id === pkgOrId) || INFRASTRUCTURE_PACKAGES[0]
+      : pkgOrId;
+
+    if (!authUser) {
+      // Peternak baru (Belum punya akun) -> Arahkan ke Sign Up terlebih dahulu
+      setPendingCheckoutPackage(pkg);
+      setAuthModalInitialMode('SIGN_UP');
+      setAuthPromptMessage(`Silakan Sign Up (Daftar Akun Baru) terlebih dahulu untuk memproses kepemilikan ${pkg.name}. Setelah terdaftar, sistem langsung mengarahkan Anda ke pembayaran DANA atau BCA.`);
+      setIsOpenAuthModal(true);
+      sounds.playDirectivePing();
+    } else {
+      // Sudah punya akun -> Langsung diarahkan ke pembayaran DANA atau BCA sistem
+      setTargetCheckoutPackage(pkg);
+      setIsOpenTopUp(true);
+      sounds.playCash();
+    }
+  };
+
   // ======================== SEWA PAKET BUNDLING INFRASTRUKTUR (Lahan + Kandang) ========================
   const handleRentPackage = (pkg: InfrastructurePackage, durationDays = 30, totalCost = pkg.totalMonthlyRentIdr) => {
+    if (!authUser) {
+      handleInitiatePackageOrder(pkg);
+      return;
+    }
+
     if (balances.saldoDompetSaya < totalCost) {
       sounds.playDirectivePing();
       setTargetCheckoutPackage(pkg);
@@ -2244,6 +2281,8 @@ export default function App() {
         onConnectMetaMask={connectMetaMask}
         onDisconnectMetaMask={disconnectMetaMask}
         metaMaskBalanceEth={metaMaskBalanceEth}
+        chainId={metaMaskChainId}
+        onSwitchNetwork={switchMetaMaskNetwork}
         userProfile={{ fullName: userProfile.fullName, role: userProfile.role }}
         activeFarmerAccount={activeFarmer}
         onOpenPersonalDashboard={() => {
@@ -2274,6 +2313,29 @@ export default function App() {
           sounds.playClick();
         }}
         accumulatedEggs={cycle.accumulatedEggs}
+      />
+
+      {/* 1.2. PANDUAN 3 TITIK TARGET PENGUNJUNG: 1 DAFTAR/SIGN UP, 2 PILIH PAKET 1-4 & BAYAR DANA/BCA, 3 AKTIFKAN OTOMATISASI LAYANAN */}
+      <VisitorTargetGuidedFunnel
+        authUser={authUser}
+        onOpenSignUp={() => {
+          setAuthPromptMessage('Silakan daftar akun baru Anda untuk memilih paket kandang ayam dan mengaktifkan otomasi panen harian.');
+          setAuthModalInitialMode('SIGN_UP');
+          setIsOpenAuthModal(true);
+        }}
+        onOpenSignIn={() => {
+          setAuthPromptMessage(null);
+          setAuthModalInitialMode('SIGN_IN');
+          setIsOpenAuthModal(true);
+        }}
+        onSelectPackage={handleInitiatePackageOrder}
+        onScrollToAutomation={() => {
+          const el = document.getElementById('metaverse-coop-section');
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+          }
+        }}
+        activeRental={activeCoopRental}
       />
 
       {/* 1.5. DASBOR PERSONAL PETERNAK & MANAJEMEN PENGGUNA MANDIRI */}
@@ -2366,11 +2428,8 @@ export default function App() {
         kasTreasuryOwner={balances.kasTreasuryOwner}
         activeRental={activeCoopRental}
         onRentCoop={handleRentCoop}
-        onRentPackage={handleRentPackage}
-        onOpenCheckoutPackage={(pkg) => {
-          setTargetCheckoutPackage(pkg);
-          setIsOpenTopUp(true);
-        }}
+        onRentPackage={handleInitiatePackageOrder}
+        onOpenCheckoutPackage={handleInitiatePackageOrder}
         onOpenTopUp={() => {
           setTargetCheckoutPackage(null);
           setIsOpenTopUp(true);
@@ -2620,6 +2679,7 @@ export default function App() {
         }}
         onSuccess={handlePaymentSuccess}
         actorName={farmer.mode === 'sovereign' ? 'Sovereign Node' : farmer.name}
+        defaultChannel={targetCheckoutPackage ? 'DANA' : 'QRIS'}
         initialAmount={targetCheckoutPackage ? targetCheckoutPackage.totalMonthlyRentIdr : undefined}
         targetPackage={
           targetCheckoutPackage
@@ -2692,6 +2752,7 @@ export default function App() {
         onClose={() => setIsOpenGramasiModal(false)}
         accumulatedEggs={cycle.accumulatedEggs}
         spentHensCount={cycle.cohorts.spentHensAfkirCount}
+        onOrderPackage={(pkgId) => handleInitiatePackageOrder(pkgId)}
       />
 
       {/* Global Farmer World Gateway & Onboarding Portal */}
@@ -2806,10 +2867,16 @@ export default function App() {
       {/* Autentikasi Gmail / Google, Manual Form & Neon PostgreSQL farmers_users Modal */}
       <AuthModal
         isOpen={isOpenAuthModal}
-        onClose={() => setIsOpenAuthModal(false)}
+        onClose={() => {
+          setIsOpenAuthModal(false);
+          setAuthPromptMessage(null);
+        }}
         currentUser={authUser}
         onAuthSuccess={handleAuthSuccess}
         onSignOut={handleSignOut}
+        initialMode={authModalInitialMode}
+        promptMessage={authPromptMessage}
+        pendingPackageName={pendingCheckoutPackage?.name}
       />
 
       {/* Secret Sovereign Owner & Admin Office Modal (Unlocked via 5x rapid tap on 🐔 logo) */}

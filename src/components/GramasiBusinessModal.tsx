@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Scale, TrendingUp, ShieldCheck, CheckCircle2, ArrowRight, DollarSign, HelpCircle, Layers, Sparkles, Clock, AlertCircle } from 'lucide-react';
+import { X, Scale, TrendingUp, ShieldCheck, CheckCircle2, ArrowRight, DollarSign, HelpCircle, Layers, Sparkles, Clock, AlertCircle, Zap } from 'lucide-react';
 import { EggGrade } from '../types/farm';
 import {
   EGG_GRADE_SPECS,
@@ -24,6 +24,7 @@ interface GramasiBusinessModalProps {
   onClose: () => void;
   accumulatedEggs: number;
   spentHensCount: number;
+  onOrderPackage?: (packageId: string) => void;
 }
 
 export const GramasiBusinessModal: React.FC<GramasiBusinessModalProps> = ({
@@ -31,6 +32,7 @@ export const GramasiBusinessModal: React.FC<GramasiBusinessModalProps> = ({
   onClose,
   accumulatedEggs,
   spentHensCount,
+  onOrderPackage,
 }) => {
   const [selectedGrade, setSelectedGrade] = useState<EggGrade>('GRADE_B');
   const [simEggCount, setSimEggCount] = useState<number>(accumulatedEggs || 120);
@@ -220,6 +222,28 @@ export const GramasiBusinessModal: React.FC<GramasiBusinessModalProps> = ({
                         +{formatRupiah(activeFountainPkg.netFarmerProfitIdr)} ({activeFountainPkg.farmerRoiPercent}%)
                       </span>
                     </div>
+
+                    {onOrderPackage && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          sounds.playClick();
+                          const targetMap: Record<string, string> = {
+                            'mikro-10': 'pkg-micro-10',
+                            'starter-100': 'pkg-starter-node',
+                            'pro-500': 'pkg-pro-iot-tier1',
+                            'mega-1000': 'pkg-mega-hub'
+                          };
+                          const targetId = targetMap[selectedFountainPackageKey] || 'pkg-pro-iot-tier1';
+                          onOrderPackage(targetId);
+                          onClose();
+                        }}
+                        className="w-full mt-2.5 py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs tracking-wide flex items-center justify-center gap-1.5 shadow-md shadow-emerald-950/40 transition active:scale-95"
+                      >
+                        <Zap className="w-3.5 h-3.5 text-emerald-200" />
+                        <span>Pesan {activeFountainPkg.packageName} Sekarang (DANA / BCA) &rarr;</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 

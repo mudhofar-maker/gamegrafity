@@ -34,6 +34,9 @@ interface AuthModalProps {
   currentUser: AuthUser | null;
   onAuthSuccess: (user: AuthUser) => void;
   onSignOut: () => void;
+  initialMode?: 'SIGN_IN' | 'SIGN_UP';
+  promptMessage?: string | null;
+  pendingPackageName?: string | null;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -41,9 +44,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   currentUser,
   onAuthSuccess,
-  onSignOut
+  onSignOut,
+  initialMode = 'SIGN_IN',
+  promptMessage,
+  pendingPackageName
 }) => {
-  const [mode, setMode] = useState<'SIGN_IN' | 'SIGN_UP'>('SIGN_IN');
+  const [mode, setMode] = useState<'SIGN_IN' | 'SIGN_UP'>(initialMode);
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
@@ -62,9 +68,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      if (initialMode) {
+        setMode(initialMode);
+      }
       fetchDbStatus();
     }
-  }, [isOpen]);
+  }, [isOpen, initialMode]);
 
   const fetchDbStatus = async () => {
     try {
@@ -334,6 +343,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           ) : (
             <>
+              {/* Peternak Baru Package Pending Notice */}
+              {pendingPackageName && (
+                <div className="p-3 bg-gradient-to-r from-amber-950/70 via-slate-900 to-indigo-950/70 border border-amber-500/50 rounded-2xl flex items-start gap-2.5 shadow-lg animate-fade-in">
+                  <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/40 shrink-0">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="font-bold text-amber-300 text-xs block">
+                      Paket Terpilih: {pendingPackageName}
+                    </span>
+                    <p className="text-slate-300 text-[11px] mt-0.5 leading-relaxed">
+                      {promptMessage || 'Silakan Sign Up (Daftar Akun Baru) terlebih dahulu. Setelah terdaftar, sistem akan otomatis mengarahkan Anda ke pembayaran resmi DANA atau BCA.'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Tab Selector: Sign In vs Sign Up */}
               <div className="grid grid-cols-2 gap-2 p-1 bg-slate-950 rounded-2xl border border-slate-800">
                 <button

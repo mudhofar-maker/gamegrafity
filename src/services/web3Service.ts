@@ -3,8 +3,29 @@ import { Web3TransactionReceipt, HarvestAttestationRecord, EggGrade } from '../t
 
 export const CONTRACT_ADDRESS = '0x89D24A6b4CcB1B6fAA2625fE562bDD9a23260359';
 export const CONTRACT_NAME = 'GamegrafityFarmCore';
-export const NETWORK_NAME = 'Ethereum Mainnet / Agro-Fi L2';
-export const CHAIN_ID = 1;
+export const NETWORK_NAME = 'Polygon PoS / Arbitrum One L2';
+export const CHAIN_ID = 137; // Polygon default
+
+export function getExplorerTxUrl(txHash: string, chainId = 137): string {
+  if (chainId === 137) return `https://polygonscan.com/tx/${txHash}`;
+  if (chainId === 42161) return `https://arbiscan.io/tx/${txHash}`;
+  if (chainId === 11155111) return `https://sepolia.etherscan.io/tx/${txHash}`;
+  return `https://etherscan.io/tx/${txHash}`;
+}
+
+export function getExplorerAddressUrl(address: string, chainId = 137): string {
+  if (chainId === 137) return `https://polygonscan.com/address/${address}`;
+  if (chainId === 42161) return `https://arbiscan.io/address/${address}`;
+  if (chainId === 11155111) return `https://sepolia.etherscan.io/address/${address}`;
+  return `https://etherscan.io/address/${address}`;
+}
+
+export function getExplorerName(chainId = 137): string {
+  if (chainId === 137) return 'PolygonScan';
+  if (chainId === 42161) return 'Arbiscan';
+  if (chainId === 11155111) return 'Sepolia Etherscan';
+  return 'Etherscan';
+}
 
 // Exchange rates:
 // 1 Butir Telur = Rp 2.500
