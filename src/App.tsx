@@ -613,13 +613,46 @@ export default function App() {
     }));
 
     // 2. Unlock module or activate package if matches
-    if (record.serviceName?.includes('Pro IoT') || record.serviceName?.includes('Starter') || record.serviceName?.includes('Sovereign')) {
+    const svcName = record.serviceName || '';
+    const isPackageOrCoop =
+      svcName.includes('Paket') ||
+      svcName.includes('Kandang') ||
+      svcName.includes('Mikro') ||
+      svcName.includes('Starter') ||
+      svcName.includes('Pro IoT') ||
+      svcName.includes('Sovereign') ||
+      svcName.includes('Mega');
+
+    if (isPackageOrCoop) {
       const durationDays = 30;
       const newExpires = Date.now() + durationDays * 86400 * 1000;
+      const isMega = svcName.includes('Mega') || svcName.includes('1.000') || svcName.includes('1000');
+      const isPro = svcName.includes('Pro IoT') || svcName.includes('500');
+      const isStarter = svcName.includes('Starter') || svcName.includes('100');
+      const isMikro = svcName.includes('Mikro') || svcName.includes('10');
+
+      const coopId = isMega
+        ? 'kandang-mega-sovereign'
+        : isPro
+        ? 'kandang-bertingkat-iot'
+        : isStarter
+        ? 'kandang-standar'
+        : 'kandang-mikro-node';
+
+      const tier = isMega
+        ? 'Enterprise Sovereign Cyber-Coop'
+        : isPro
+        ? 'Smart Multi-Tier Closed House'
+        : isStarter
+        ? 'Starter Semi-Closed'
+        : 'Micro Modular Semi-Closed';
+
+      const capacityBirds = isMega ? 1000 : isPro ? 500 : isStarter ? 100 : 10;
+
       setActiveCoopRental(() => ({
-        coopId: record.serviceName.includes('Pro IoT') ? 'kandang-bertingkat-iot' : 'kandang-standar',
-        name: record.serviceName,
-        tier: record.serviceName.includes('Pro IoT') ? 'Smart Multi-Tier Closed House' : 'Starter Semi-Closed',
+        coopId,
+        name: svcName,
+        tier,
         status: 'AKTIF',
         rentedAt: Date.now(),
         expiresAt: newExpires,
@@ -627,13 +660,13 @@ export default function App() {
         monthlyRentIdr: record.amountIdr,
         contractCode: record.contractCode || 'COOP-TWOWAY-' + Math.floor(1000 + Math.random() * 9000),
         txHash: record.txHash || '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
-        capacityBirds: record.serviceName.includes('Mega') ? 1500 : record.serviceName.includes('Pro IoT') ? 500 : 150,
+        capacityBirds,
         iotTelemetry: {
           tempC: cycle.ambientTempC,
-          targetTempC: cycle.targetTempC,
+          targetTempC: 24.0,
           humidityRh: cycle.humidityRh,
           targetHumidityRh: 65,
-          ammoniaPpm: 7.2,
+          ammoniaPpm: 6.8,
           coolingPadActive: true,
           exhaustFanRpm: 1450,
           airVelocityMs: 2.4,
@@ -641,7 +674,19 @@ export default function App() {
           sensorHealthPercent: 100,
         },
       }));
-    } else if (record.serviceName?.includes('Top-Up')) {
+
+      // Otomatisasi layanan: aktifkan AC conditioner & listrik selama 30 hari & normalkan suhu
+      setCycle((prev) => ({
+        ...prev,
+        modernCoopDaysRemaining: Math.max(prev.modernCoopDaysRemaining, 30),
+        acClimateDaysRemaining: Math.max(prev.acClimateDaysRemaining, 30),
+        electricityDaysRemaining: Math.max(prev.electricityDaysRemaining, 30),
+        ambientTempC: 24.0,
+        targetTempC: 24.0,
+        heatStressActive: false,
+      }));
+    } else {
+      // Top-Up saldo dompet peternak
       setBalances((prev) => ({
         ...prev,
         saldoDompetSaya: prev.saldoDompetSaya + (record.amountIdr || 0),
@@ -2336,6 +2381,13 @@ export default function App() {
           }
         }}
         activeRental={activeCoopRental}
+        onOpenTwoWayConfirmation={(service) => {
+          if (service) {
+            setTwoWayTargetService(service);
+          }
+          setIsOpenTwoWayModal(true);
+        }}
+        twoWayPendingCount={twoWayPendingCount}
       />
 
       {/* 1.5. DASBOR PERSONAL PETERNAK & MANAJEMEN PENGGUNA MANDIRI */}

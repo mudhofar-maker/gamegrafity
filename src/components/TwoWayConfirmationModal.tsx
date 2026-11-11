@@ -75,6 +75,11 @@ export const TwoWayConfirmationModal: React.FC<TwoWayConfirmationModalProps> = (
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Non-blocking Inline Reject state (replaces window.prompt)
+  const [rejectingRecordId, setRejectingRecordId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState<string>('Dana belum masuk ke mutasi akun DANA Lumpia Ipul.');
+  const [isSubmittingReject, setIsSubmittingReject] = useState<boolean>(false);
+
   // Fetch all records from backend
   const fetchRecords = async () => {
     setIsLoadingRecords(true);
@@ -104,6 +109,13 @@ export const TwoWayConfirmationModal: React.FC<TwoWayConfirmationModalProps> = (
         setAmountIdr(initialService.amountIdr);
         if (initialService.channel) setPaymentChannel(initialService.channel);
       }
+
+      // Live 3.5s auto-polling to keep both Sender & Receiver in sync
+      const interval = setInterval(() => {
+        fetchRecords();
+      }, 3500);
+
+      return () => clearInterval(interval);
     }
   }, [isOpen, initialService]);
 
@@ -223,27 +235,30 @@ export const TwoWayConfirmationModal: React.FC<TwoWayConfirmationModalProps> = (
     }
   };
 
-  // Handler: Penerima Reject
-  const handleReceiverReject = async (recordId: string) => {
-    const reason = prompt('Masukkan alasan penolakan (misal: dana belum masuk mutasi DANA):', 'Dana belum masuk ke mutasi akun DANA Lumpia Ipul.');
-    if (!reason) return;
-
+  // Handler: Penerima Reject (No blocking prompt)
+  const handleExecuteReject = async (recordId: string, customReason?: string) => {
+    const finalReason = customReason || rejectReason || 'Dana belum masuk ke mutasi akun DANA Lumpia Ipul.';
+    setIsSubmittingReject(true);
     sounds.playClick();
     try {
       const res = await fetch('/api/p2p/receiver-reject', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: recordId, reason })
+        body: JSON.stringify({ id: recordId, reason: finalReason })
       });
       const data = await res.json();
       if (data.success) {
-        fetchRecords();
+        await fetchRecords();
+        setRejectingRecordId(null);
       }
     } catch (err) {
       console.error(err);
       setRecords((prev) =>
         prev.map((r) => (r.id === recordId ? { ...r, receiverStatus: 'REJECTED' } : r))
       );
+      setRejectingRecordId(null);
+    } finally {
+      setIsSubmittingReject(false);
     }
   };
 
@@ -675,10 +690,13 @@ export const TwoWayConfirmationModal: React.FC<TwoWayConfirmationModalProps> = (
                               <>
                                 <button
                                   type="button"
-                                  onClick={() => handleReceiverReject(rec.id)}
+                                  onClick={() => {
+                                    sounds.playClick();
+                                    setRejectingRecordId(rejectingRecordId === rec.id ? null : rec.id);
+                                  }}
                                   className="px-3 py-1.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-300 border border-red-500/30 text-xs font-semibold transition"
                                 >
-                                  Tolak
+                                  {rejectingRecordId === rec.id ? 'Batal' : 'Tolak'}
                                 </button>
 
                                 <button
@@ -709,6 +727,60 @@ export const TwoWayConfirmationModal: React.FC<TwoWayConfirmationModalProps> = (
                             )}
                           </div>
                         </div>
+
+                        {/* Inline Non-Blocking Rejection Panel */}
+                        {rejectingRecordId === rec.id && isPending && (
+                          <div className="mt-3 p-3 bg-red-950/40 border border-red-500/30 rounded-xl space-y-2 text-xs animate-fadeIn">
+                            <span className="font-bold text-red-300 block">Pilih / Masukkan Alasan Penolakan:</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {[
+                                'Dana belum masuk ke mutasi akun DANA Lumpia Ipul.',
+                                'Nominal transfer tidak sesuai dengan tagihan.',
+                                'Bukti transfer tidak terbaca atau buram.'
+                              ].map((reasonOption) => (
+                                <button
+                                  key={reasonOption}
+                                  type="button"
+                                  onClick={() => {
+                                    sounds.playClick();
+                                    setRejectReason(reasonOption);
+                                  }}
+                                  className={`text-[10px] px-2 py-1 rounded-lg border transition ${
+                                    rejectReason === reasonOption
+                                      ? 'bg-red-500/30 border-red-400 text-white font-bold'
+                                      : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-500'
+                                  }`}
+                                >
+                                  {reasonOption}
+                                </button>
+                              ))}
+                            </div>
+                            <input
+                              type="text"
+                              value={rejectReason}
+                              onChange={(e) => setRejectReason(e.target.value)}
+                              placeholder="Ketik alasan khusus..."
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-red-500"
+                            />
+                            <div className="flex justify-end gap-2 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => setRejectingRecordId(null)}
+                                className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                              >
+                                Batal
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isSubmittingReject}
+                                onClick={() => handleExecuteReject(rec.id, rejectReason)}
+                                className="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition flex items-center gap-1 disabled:opacity-50"
+                              >
+                                {isSubmittingReject ? 'Memproses...' : 'Konfirmasi Tolak Transaksi'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })

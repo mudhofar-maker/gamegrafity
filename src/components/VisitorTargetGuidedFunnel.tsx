@@ -13,6 +13,8 @@ interface VisitorTargetGuidedFunnelProps {
   onSelectPackage: (pkg: InfrastructurePackage) => void;
   onScrollToAutomation: () => void;
   activeRental: ActiveCoopRental | null;
+  onOpenTwoWayConfirmation?: (service?: { name: string; amountIdr: number }) => void;
+  twoWayPendingCount?: number;
 }
 
 export const VisitorTargetGuidedFunnel: React.FC<VisitorTargetGuidedFunnelProps> = ({
@@ -22,6 +24,8 @@ export const VisitorTargetGuidedFunnel: React.FC<VisitorTargetGuidedFunnelProps>
   onSelectPackage,
   onScrollToAutomation,
   activeRental,
+  onOpenTwoWayConfirmation,
+  twoWayPendingCount,
 }) => {
   const [activeTabPackageId, setActiveTabPackageId] = useState<string>(
     INFRASTRUCTURE_PACKAGES[2]?.id || 'pkg-pro-iot-tier1'
@@ -245,6 +249,28 @@ export const VisitorTargetGuidedFunnel: React.FC<VisitorTargetGuidedFunnelProps>
                     <CreditCard className="w-4 h-4" />
                     Pilih Paket Ini & Bayar (DANA / BCA) &rarr;
                   </button>
+
+                  {onOpenTwoWayConfirmation && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sounds.playClick();
+                        onOpenTwoWayConfirmation({
+                          name: selectedPkg.name,
+                          amountIdr: selectedPkg.entryPackagePriceIdr || selectedPkg.totalMonthlyRentIdr,
+                        });
+                      }}
+                      className="w-full mt-2 py-1.5 px-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-mono text-[11px] font-bold border border-amber-500/40 transition flex items-center justify-center gap-1.5"
+                    >
+                      <span>🤝</span>
+                      <span>Konfirmasi 2-Arah (Pengirim & Owner)</span>
+                      {twoWayPendingCount !== undefined && twoWayPendingCount > 0 && (
+                        <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white text-[9px] font-bold animate-pulse">
+                          {twoWayPendingCount}
+                        </span>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
 
